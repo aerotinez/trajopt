@@ -1,9 +1,9 @@
 function x_dot = rk4(f,x,u,dt)
     arguments
-        f (1,1) function_handle
-        x (:,1) double
-        u (:,1) double
-        dt (1,1) double
+        f (1,1) function_handle; % plant dynamics
+        x (:,1) double; % states
+        u (:,1) double; % controls
+        dt (1,1) double; % step size
     end
     k1 = f(x,u);
     k2 = f(x + k1*dt/2,u);
