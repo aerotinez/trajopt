@@ -1,25 +1,25 @@
 close("all"); clear; clc;
-N = 25;
+N = 20;
 nx = 7;
 nu = 2;
-r = 0.297;
-v = 110/3.6;
+r = 0.5;
+v = 20/3.6;
 w = v/r;
 xi = [0;0;0;0;0;0;w];
-xf = [100;5;0;0;0;0;w];
-params = [9.81,7,r].';
+xf = [10;1;0;0;0;0;w];
+params = [9.81,1,r].';
 I = eye(8);
 f = @(x,u,p)I([1:4,6:8],:)*rollingDisk([x(1:4);0;x(5:7)],u,p);
 plant = Plant(f,xi,xf,nu,params);
 C = CollocationConstraints(plant,@trapezoidalConstraints,N);
 M = [
-    100;
-    100
+    1;
+    1
     ];
 
 x0 = repmat([0;0;0;0;0;0;w],[1,N]);
 u0 = zeros(nu,N);
-tf0 = 2;
+tf0 = 1;
 X = [
     reshape([x0;u0],[],1);
     tf0
@@ -49,8 +49,8 @@ beq = [];
 options = optimoptions( ...
     'fmincon', ...
     'Display','iter', ...
-    'SpecifyConstraintGradient',true, ...
     'EnableFeasibilityMode',true, ...
+    'SpecifyConstraintGradient',true, ...
     'OptimalityTolerance',1E-04, ...
     'ConstraintTolerance',1E-04, ...
     'MaxFunctionEvaluations',1e5, ...
@@ -89,6 +89,6 @@ function J = fun(x)
 tf = x(end);
 X = reshape(x(1:end -1),9,[]);
 u = X(end-1:end,:);
-J = tf + (1/2).*u(:).'*u(:);
-% J = tf;
+% J = tf + (1/2).*u(:).'*u(:);
+J = tf;
 end
