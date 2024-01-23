@@ -1,4 +1,4 @@
-function Ceq = trapezoidal(f,x0,u0,x1,u1,dt)
+function Ceq = trapezoidalConstraints(f,x0,u0,x1,u1,dt)
     arguments
         f (1,1) function_handle;
         x0; 
