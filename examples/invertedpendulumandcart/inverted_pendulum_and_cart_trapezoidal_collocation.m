@@ -1,17 +1,17 @@
 close("all"); clear; clc;
-N = 200;
-xi = [0;0;0;0];
-xf = [1;0;0;0];
-params = [-9.81,0.3,0.5,0.2].';
+N = 10;
+xi = [0;deg2rad(180);0;0];
+xf = [2;0;0;0];
+params = [-9.81,0.5,1,0.3].';
 plant = Plant(@invertedPendulumAndCart,xi,xf,1,params);
 nx = 4;
 nu = 1;
 C = CollocationConstraints(plant,@trapezoidalConstraints,N);
-M = 1;
+M = 10;
 
 x0 = zeros(nx,N);
 u0 = zeros(nu,N);
-tf0 = 1;
+tf0 = 2;
 X = [
     reshape([x0;u0],[],1);
     tf0
@@ -41,10 +41,8 @@ beq = [];
 options = optimoptions( ...
     'fmincon', ...
     'Display','iter', ...
-    "EnableFeasibilityMode",true, ...
     'MaxFunctionEvaluations',1e5, ...
     'MaxIterations',1e5, ...
-    "SpecifyConstraintGradient",true, ...
     "UseParallel",true ...
     );
 
