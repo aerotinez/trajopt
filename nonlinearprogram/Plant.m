@@ -15,11 +15,12 @@ classdef Plant
                 dynamics (1,1) function_handle;
                 parameters (:,1) double; 
             end
-            obj.x = optimization_variables.States;
-            obj.xdot = sym("x_dot_",[numel(optimization_variables.States),1]);
-            obj.u = optimization_variables.Controls;
+            t = optimization_variables.Variable;
+            obj.x = optimization_variables.States(t);
+            obj.xdot = diff(obj.x,t);
+            obj.u = optimization_variables.Controls(t);
             obj.Parameters = parameters; 
-            obj.Dynamics = @(x,u)dynamics(x,u,obj.Parameters); 
+            obj.Dynamics = @(x,u)dynamics(x,u,obj.Parameters);
         end
         function disp(obj)
             disp("PLANT DYNAMICS:")
