@@ -48,7 +48,18 @@ classdef OptimalControlProblem < handle
         end
         function disp(obj)
             disp("MINIMIZE:");
-
+            dispObjective(obj);
+            fprintf("SUBJECT TO:\n\n");
+            dispDynamicConstraints(obj);
+            dispPathConstraints(obj);
+            dispBoundaryConstraints(obj);
+            dispParameterBounds(obj);
+            dispStateBounds(obj);
+            dispControlBounds(obj);
+        end 
+    end
+    methods (Access = private)
+        function dispObjective(obj)
             t0 = obj.InitialTime;
             x0 = obj.InitialState;
             tf = obj.FinalTime;
@@ -61,45 +72,65 @@ classdef OptimalControlProblem < handle
             t = obj.Variables.Variable;
             x = obj.Variables.States(t);
             u = obj.Variables.Controls(t);
-            L = int(obj.CostFunction.Running(x,u),t,t0,tf,"Hold",true);
+            L = int(obj.CostFunction.Running(x, u),t,t0,tf,"Hold",true);
             disp(M + L);
-
-            fprintf("SUBJECT TO:\n\n");
-
+        end
+        function dispDynamicConstraints(obj)
             disp("Dynamic constraints:");
-            disp(diff(x,t) == obj.DynamicConstraints.Dynamics(x,u));
-
-            disp("Path constraints:");
+            t = obj.Variables.Variable;
+            x = obj.Variables.States(t);
+            u = obj.Variables.Controls(t);
+            disp(diff(x, t) == obj.DynamicConstraints.Dynamics(x,u));
+        end
+        function dispPathConstraints(obj)
+            t = obj.Variables.Variable;
+            x = obj.Variables.States(t);
+            u = obj.Variables.Controls(t);
             if any(obj.PathConstraint(x,u))
+                disp("Path constraints:");
                 disp(obj.PathConstraint(x,u) <= 0);
-            else
-                fprintf("\n");
             end
-
-            disp("Boundary constraints:");
+        end
+        function dispBoundaryConstraints(obj)
+            t0 = obj.InitialTime;
+            tf = obj.FinalTime;
+            x0 = obj.InitialState;
+            xf = obj.FinalState;
             if any(obj.BoundaryConstraint(x0,t0,xf,tf))
+                disp("Boundary constraints:");
                 disp(obj.BoundaryConstraint(x0,t0,xf,tf) <= 0);
-            else
-                fprintf("\n");
             end
-
-            disp("Parameter bounds:");
+        end
+        function dispParameterBounds(obj)
+            t0 = obj.InitialTime;
+            tf = obj.FinalTime;
             tlb = obj.Variables.VariableLowerBound;
             tub = obj.Variables.VariableUpperBound;
-            obj.displayParameterConstraints(t0,tf,tlb,tub);
-
-            disp("State bounds:");
+            if ~isempty(tlb) || ~isempty(tub)
+                disp("Parameter bounds:");
+                obj.displayParameterConstraints(t0,tf,tlb,tub);
+            end
+        end
+        function dispStateBounds(obj)
+            t = obj.Variables.Variable;
+            x = obj.Variables.States(t);
             xlb = obj.Variables.StateLowerBounds;
             xub = obj.Variables.StateUpperBounds;
-            obj.displayBoundConstraints(x,xlb,xub);
-
-            disp("Control bounds:");
+            if ~isempty(xlb) || ~isempty(xub)
+                disp("State bounds:");
+                obj.displayBoundConstraints(x,xlb,xub);
+            end
+        end
+        function dispControlBounds(obj)
+            t = obj.Variables.Variable;
+            u = obj.Variables.Controls(t);
             ulb = obj.Variables.ControlLowerBounds;
             uub = obj.Variables.ControlUpperBounds;
-            obj.displayBoundConstraints(u,ulb,uub);
-        end 
-    end
-    methods (Access = private)
+            if ~isempty(ulb) || ~isempty(uub)
+                disp("Control bounds:");
+                obj.displayBoundConstraints(u,ulb,uub);
+            end
+        end
         function displayParameterConstraints(~,t0,tf,tlb,tub)
             if ~isempty(tlb) && isempty(tub)
                 disp(tf > (t0 >= tlb));
