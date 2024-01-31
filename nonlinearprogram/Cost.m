@@ -33,7 +33,7 @@ classdef Cost
             end
             obj.Running = running;
             obj.Terminal = terminal;
-            obj.t = optimization_variables.Variable;
+            obj.t = optimization_variables.Parameter;
             obj.x = optimization_variables.States(obj.t);
             obj.u = optimization_variables.Controls(obj.t);
             obj.t0 = str2sym(sprintf(string(obj.t) + "_%d",0));

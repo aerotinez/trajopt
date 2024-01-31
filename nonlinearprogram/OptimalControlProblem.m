@@ -40,7 +40,7 @@ classdef OptimalControlProblem < handle
             obj.DynamicConstraints = plant;
             obj.PathConstraint = path;
             obj.BoundaryConstraint = boundary;
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             obj.InitialTime = str2sym(sprintf(string(t) + "_%d",0));
             obj.InitialState = obj.Variables.States(obj.InitialTime);
             obj.FinalTime = str2sym(sprintf(string(t) + "_%s",'f'));
@@ -69,7 +69,7 @@ classdef OptimalControlProblem < handle
                 M = 0;
             end
 
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             x = obj.Variables.States(t);
             u = obj.Variables.Controls(t);
             L = int(obj.CostFunction.Running(x, u),t,t0,tf,"Hold",true);
@@ -77,13 +77,13 @@ classdef OptimalControlProblem < handle
         end
         function dispDynamicConstraints(obj)
             disp("Dynamic constraints:");
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             x = obj.Variables.States(t);
             u = obj.Variables.Controls(t);
             disp(diff(x, t) == obj.DynamicConstraints.Dynamics(x,u));
         end
         function dispPathConstraints(obj)
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             x = obj.Variables.States(t);
             u = obj.Variables.Controls(t);
             if any(obj.PathConstraint(x,u))
@@ -104,53 +104,49 @@ classdef OptimalControlProblem < handle
         function dispParameterBounds(obj)
             t0 = obj.InitialTime;
             tf = obj.FinalTime;
-            tlb = obj.Variables.VariableLowerBound;
-            tub = obj.Variables.VariableUpperBound;
-            if ~isempty(tlb) || ~isempty(tub)
+            tlb = obj.Variables.ParameterLowerBound;
+            tub = obj.Variables.ParameterUpperBound;
+            if ~all(isinf(tlb)) || ~all(isinf(tub)) 
                 disp("Parameter bounds:");
                 obj.displayParameterConstraints(t0,tf,tlb,tub);
             end
         end
         function dispStateBounds(obj)
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             x = obj.Variables.States(t);
             xlb = obj.Variables.StateLowerBounds;
             xub = obj.Variables.StateUpperBounds;
-            if ~isempty(xlb) || ~isempty(xub)
+            if ~all(isinf(xlb)) || ~all(isinf(xub)) 
                 disp("State bounds:");
                 obj.displayBoundConstraints(x,xlb,xub);
             end
         end
         function dispControlBounds(obj)
-            t = obj.Variables.Variable;
+            t = obj.Variables.Parameter;
             u = obj.Variables.Controls(t);
             ulb = obj.Variables.ControlLowerBounds;
             uub = obj.Variables.ControlUpperBounds;
-            if ~isempty(ulb) || ~isempty(uub)
+            if ~all(isinf(ulb)) || ~all(isinf(uub)) 
                 disp("Control bounds:");
                 obj.displayBoundConstraints(u,ulb,uub);
             end
         end
-        function displayParameterConstraints(~,t0,tf,tlb,tub)
-            if ~isempty(tlb) && isempty(tub)
+        function displayParameterConstraints(~,t0,tf,tlb,tub) 
+            if ~all(isinf(tlb)) && all(isinf(tub)) 
                 disp(tf > (t0 >= tlb));
-            elseif isempty(tlb) && ~isempty(tub)
+            elseif all(isinf(tlb)) && ~all(isinf(tub)) 
                 disp(t0 < (tf <= tub));
-            elseif ~isempty(tlb) && ~isempty(tub)
-                disp((tlb <= t0) < (tf <= tub));
-            else
-                fprintf("\n");
+            elseif ~all(isinf(tlb)) && ~all(isinf(tub)) 
+                disp((tlb <= t0) < (tf <= tub)); 
             end
         end
         function displayBoundConstraints(~,x,lb,ub)
-            if ~isempty(lb) && isempty(ub)
+            if ~all(isinf(lb)) && all(isinf(ub)) 
                 disp(x >= lb);
-            elseif isempty(lb) && ~isempty(ub)
+            elseif all(isinf(lb)) && ~all(isinf(ub)) 
                 disp(x <= ub);
-            elseif ~isempty(lb) && ~isempty(ub)
-                disp((lb <= x) <= ub);
-            else
-                fprintf("\n");
+            elseif ~all(isinf(lb)) && ~all(isinf(ub)) 
+                disp((lb <= x) <= ub); 
             end
         end
     end

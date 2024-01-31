@@ -15,7 +15,7 @@ classdef Plant
                 dynamics (1,1) function_handle;
                 parameters (:,1) double; 
             end
-            t = optimization_variables.Variable;
+            t = optimization_variables.Parameter;
             obj.x = optimization_variables.States(t);
             obj.xdot = diff(obj.x,t);
             obj.u = optimization_variables.Controls(t);
