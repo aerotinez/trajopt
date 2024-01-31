@@ -26,12 +26,12 @@ classdef DirectCollocation < handle
                 ocp OptimalControlProblem;
                 mesh_size (1,1) double = 20;
             end
-            obj.Lagrange = ocp.CostFunction.Terminal;
-            obj.Mayer = ocp.CostFunction.Running;
+            obj.Lagrange = ocp.CostFunction.Running;
+            obj.Mayer = ocp.CostFunction.Terminal;
             f = ocp.DynamicConstraints; 
             obj.Defect = @(x0,u0,xf,uf,h)method(f,x0,u0,xf,uf,h);
             obj.MeshSize = mesh_size;
-            obj.Mesh = linspace(0,1,obj.MeshSize);
+            obj.Mesh = linspace(0,1,obj.MeshSize + 1);
             obj.NumStates = ocp.Variables.NumStates;
             obj.NumControls = ocp.Variables.NumControls;
             obj.IsInitialTimeFree = isequal(class(ocp.InitialTime),"sym");
@@ -42,10 +42,10 @@ classdef DirectCollocation < handle
             if ~obj.IsFinalTimeFree
                 obj.FinalTime = ocp.FinalTime;
             end
-            if ~class(ocp.InitialState,"sym")
+            if ~isequal(class(ocp.InitialState),"sym")
                 obj.InitialState = ocp.InitialState;
             end
-            if ~class(ocp.FinalState,"sym")
+            if ~isequal(class(ocp.FinalState),"sym")
                 obj.FinalState = ocp.FinalState;
             end
 
@@ -55,26 +55,26 @@ classdef DirectCollocation < handle
                 ];
 
             ub = [
-                ocp.Variables.UpperBounds;
+                ocp.Variables.StateUpperBounds;
                 ocp.Variables.ControlUpperBounds
                 ];
 
             obj.LowerBounds = repmat(lb,[obj.MeshSize,1]);
             obj.UpperBounds = repmat(ub,[obj.MeshSize,1]);
 
-            if IsFinalTimeFree
+            if obj.IsFinalTimeFree
                 obj.LowerBounds = [
-                    obj.LowerBounds;
-                    ocp.Variables.ParameterLowerBound
+                    ocp.Variables.ParameterLowerBound;
+                    obj.LowerBounds
                     ];
 
                 obj.UpperBounds = [
-                    obj.UpperBounds;
-                    ocp.Variables.ParameterUpperBound
+                    ocp.Variables.ParameterUpperBound;
+                    obj.UpperBounds
                     ];
             end
 
-            if IsInitialTimeFree
+            if obj.IsInitialTimeFree
                 obj.LowerBounds = [
                     ocp.Variables.ParameterLowerBound;
                     obj.LowerBounds
@@ -108,7 +108,7 @@ classdef DirectCollocation < handle
                     ];
             end
         end
-        function z = optimize(obj)
+        function [t0,tf,x,u] = optimize(obj,fmincon_options)
             f = @obj.objective;
             z0 = obj.InitialGuess;
             A = [];
@@ -117,7 +117,11 @@ classdef DirectCollocation < handle
             lb = obj.LowerBounds;
             ub = obj.UpperBounds;
             nonlcon = @obj.nonlinearConstraints;
-            z = fmincon(f,z0,A,b,Aeq,beq,lb,ub,nonlcon);
+            z = fmincon(f,z0,A,b,Aeq,beq,lb,ub,nonlcon,fmincon_options);
+            t0 = obj.unpackInitialTime(z);
+            tf = obj.unpackFinalTime(z);
+            x = obj.unpackStates(z);
+            u = obj.unpackControls(z);
         end
     end
     methods (Access = private) 
@@ -163,7 +167,7 @@ classdef DirectCollocation < handle
             w = obj.Lagrange(x,u).';
 
             dm = diff(obj.Mesh);
-            b = (1/2).*sum([dm(1:end - 1),0;0,dm(2:end)],2);
+            b = (1/2).*sum([dm(1:end - 1),0;0,dm(2:end)],1);
             h = diff(obj.Mesh).*(tf - t0);
             q = diag(h)*w;
             L = b*q;
@@ -181,13 +185,13 @@ classdef DirectCollocation < handle
                 beq = obj.InitialState;
             end
             if ~isempty(obj.FinalState)
-                Aeq = [Aeq;zeros(nx),zeros(nx,nu),zeros(nx,(nx + nu)*(N - 1))];
+                Aeq = [Aeq;zeros(nx,(nx + nu)*(N - 1)),eye(nx),zeros(nx,nu)];
                 beq = [beq;obj.FinalState];
             end
-            if obj.IsInitialTimeFree
+            if obj.IsFinalTimeFree
                 Aeq = [zeros(size(Aeq,1),1),Aeq];
             end
-            if obj.IsFinalTimeFree
+            if obj.IsInitialTimeFree
                 Aeq = [zeros(size(Aeq,1),1),Aeq];
             end
         end 
@@ -196,7 +200,7 @@ classdef DirectCollocation < handle
             tf = obj.unpackFinalTime(z);
             x = obj.unpackStates(z);
             u = obj.unpackControls(z);
-            h = diff(obj.Mesh).*(tf - t0);
+            h = diff(obj.Mesh(1:end-1)).*(tf - t0);
             x0 = x(:,1:end - 1);
             u0 = u(:,1:end - 1);
             xf = x(:,2:end);
