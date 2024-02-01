@@ -1,5 +1,5 @@
 classdef nlp < handle
-    properties (GetAccess = public, SetAccess = private)
+    properties (Access = public)
         Mesh;
         Variables;
         Aeq;

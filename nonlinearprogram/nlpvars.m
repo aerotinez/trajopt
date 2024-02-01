@@ -1,43 +1,98 @@
 classdef nlpvars < handle
-    properties (GetAccess = public, SetAccess = private)
+    properties (Access = public)
         InitialTime;
-        IsInitialTimeFree;
         FinalTime;
-        IsFinalTimeFree;
         State;
         Control; 
-        NumPoints;
         NumStates;
         NumControls;
-    end
-    methods (Access = public)
-        function obj = nlpvars(state,control,initial_time,is_initial_time_free,final_time,is_final_time_free)
-            arguments
-                state double;
-                control double;
-                initial_time double {mustBeScalarOrEmpty};
-                is_initial_time_free logical;
-                final_time double {mustBeScalarOrEmpty};
-                is_final_time_free logical;
+        NumPoints;
+        VariableName;
+        StateNames;
+        ControlNames;
+        StateUnitName;
+        ControlUnitName;
+        VariableUnit;
+        StateUnits;
+        ControlUnits;
+        FreeInitialTime (1,1) logical = false;
+        FreeFinalTime (1,1) logical = false;
+    end 
+    methods (Access = public) 
+        function z = get(obj)
+            z = reshape([obj.State;obj.Control],[],1);
+            if obj.FreeFinalTime
+                z = [obj.FinalTime;z];
             end
-            obj.State = state;
-            obj.Control = control;
-            obj.InitialTime = initial_time;
-            obj.IsInitialTimeFree = is_initial_time_free;
-            obj.FinalTime = final_time;
-            obj.IsFinalTimeFree = is_final_time_free;
-            obj.NumStates = size(state,1);
-            obj.NumControls = size(control,1);
-            obj.NumPoints = size(state,2);
-            obj.validate();
-        end 
+            if obj.FreeInitialTime
+                z = [obj.InitialTime;z];
+            end
+        end
+        function set(obj,z)
+            arguments
+                obj (1,1) nlpvars
+                z (:,1) double
+            end
+            [t0,tf,x,u] = obj.unpack(z);
+            obj.InitialTime = t0;
+            obj.FinalTime = tf;
+            obj.State = x;
+            obj.Control = u;
+            obj.NumPoints = size(x,2);
+        end
+        function [t0,tf,x,u] = unpack(obj,z)
+            arguments
+                obj (1,1) nlpvars
+                z (:,1) double
+            end
+            [t0,tf,y] = obj.unpackTimes(z);
+            x = y(1:obj.NumStates,:);
+            u = y(obj.NumStates + 1:end,:);
+        end
+        function fig = plot(obj,mesh,rows,cols)
+            arguments
+                obj (1,1) nlpvars;
+                mesh (1,1) nlpmesh;
+                rows (1,1) double;
+                cols (1,1) double;
+            end
+            fig = figure();
+            tiledlayout(fig,rows,cols);
+            m = mesh.Mesh;
+            t0 = obj.InitialTime;
+            tf = obj.FinalTime;
+            t = [t0,cumsum(diff(m).*(tf - t0)) + t0];
+            y = [obj.State;obj.Control];
+            titles = [obj.StateNames;obj.ControlNames];
+            labels = [obj.StateUnitName;obj.ControlUnitName];
+            units = [obj.StateUnits;obj.ControlUnits];
+            for i = 1:(obj.NumStates + obj.NumControls)
+                nexttile();
+                scatter(t,y(i,:),10,"filled");
+                box("on");
+                title(titles(i));
+                xlabel(strcat(obj.VariableName," (",obj.VariableUnit,")"));
+                ylabel(strcat(labels(i)," (",units(i),")"));
+            end
+        end
     end
     methods (Access = private)
-        function validate(obj)
-            msg = "State and control must have same number of points.";
-            if ~isequal(size(obj.State,2),size(obj.Control,2))
-                error(msg);
+        function [t0,tf,y] = unpackTimes(obj,z)
+            t0 = obj.InitialTime;
+            tf = obj.FinalTime;
+            y = z;
+            if obj.FreeInitialTime && obj.FreeFinalTime
+                t0 = z(1);
+                tf = z(2);
+                y = z(3:end);
+            elseif obj.FreeInitialTime && ~obj.FreeFinalTime
+                t0 = z(1);
+                y = z(2:end);
+            elseif ~obj.FreeInitialTime && obj.FreeFinalTime
+                tf = z(1);
+                y = z(2:end);
             end
+            y = reshape(y,obj.NumStates + obj.NumControls,[]);
         end
     end
 end

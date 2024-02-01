@@ -2,6 +2,7 @@ classdef optvar < handle
     properties (GetAccess = public, SetAccess = private)
         Name;
         Symbol;
+        UnitName;
         Units;
         Initial;
         Final;
@@ -9,10 +10,11 @@ classdef optvar < handle
         UpperBound;
     end
     methods (Access = public)
-        function obj = optvar(name,symbol,units,initial,final,lower_bound,upper_bound)
+        function obj = optvar(name,symbol,unit_name,units,initial,final,lower_bound,upper_bound)
             arguments
                 name (1,1) string;
                 symbol (1,1) string;
+                unit_name (1,1) string = "";
                 units (1,1) string = "";
                 initial double {mustBeScalarOrEmpty} = double.empty(0,1);
                 final double {mustBeScalarOrEmpty} = double.empty(0,1);
@@ -21,6 +23,7 @@ classdef optvar < handle
             end
             obj.Name = name;
             obj.Symbol = symbol;
+            obj.UnitName = unit_name;
             obj.Units = units;
             obj.Initial = initial;
             obj.Final = final; 
