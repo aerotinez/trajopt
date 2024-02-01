@@ -67,35 +67,5 @@ classdef nlp < handle
             uf = u(:,2:end);
             Ceq = reshape(Cdyn(fdyn,x0,u0,xf,uf,h),[],1);
         end
-    end
-    methods (Access = private)
-        function [t0,tf,x,u] = unpack(obj,z)
-            t0 = obj.Variables.InitialTime;
-            if obj.Variables.IsInitialTimeFree
-                t0 = z(1);
-                z = z(2:end);
-            end
-            tf = obj.Variables.FinalTime;
-            if obj.Variables.IsFinalTimeFree
-                tf = z(1);
-                z = z(2:end);
-            end
-            nx = obj.Variables.NumStates;
-            nu = obj.Variables.NumControls;
-            y = reshape(z,nx + nu,[]);
-            x = y(1:nx,:);
-            u = y(nx + 1:end,:);
-        end
-        function z = pack(obj)
-            z = [];
-            if obj.Variables.IsInitialTimeFree
-                z = [z;obj.Variables.InitialTime];
-            end
-            if obj.Variables.IsFinalTimeFree
-                z = [z;obj.Variables.FinalTime];
-            end
-            y = [obj.Variables.State;obj.Variables.Control];
-            z = [z;y(:)];
-        end 
-    end
+    end 
 end
