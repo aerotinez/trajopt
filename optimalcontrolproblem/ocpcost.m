@@ -2,7 +2,7 @@ classdef ocpcost
     properties (GetAccess = public, SetAccess = private)
         % Lagrange term (running cost)
         %   Function prototype:
-        %       L = lagrange(x,u,t)
+        %       L = lagrange(x,u)
         %   where:
         %       x - state vector
         %       u - control vector
@@ -35,7 +35,7 @@ classdef ocpcost
         end
         function disp(obj)
             [t,x,u] = obj.Vars.sym();
-            L = obj.Lagrange(x,u,t);
+            L = obj.Lagrange(x,u);
             x0 = obj.initialState();
             t0 = obj.lowerLimit();
             xf = obj.finalState();

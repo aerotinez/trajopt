@@ -61,14 +61,17 @@ classdef nlpvars < handle
             m = mesh.Mesh;
             t0 = obj.InitialTime;
             tf = obj.FinalTime;
-            t = [t0,cumsum(diff(m).*(tf - t0)) + t0];
+            t = [0,cumsum(diff(m).*(tf - t0)) + t0];
             y = [obj.State;obj.Control];
             titles = [obj.StateNames;obj.ControlNames];
             labels = [obj.StateUnitName;obj.ControlUnitName];
             units = [obj.StateUnits;obj.ControlUnits];
             for i = 1:(obj.NumStates + obj.NumControls)
                 nexttile();
-                scatter(t,y(i,:),10,"filled");
+                scatter(t,y(i,:),20,"filled", ...
+                    "MarkerFaceColor",'k', ...
+                    "MarkerEdgeColor",'k');
+                xlim([t0,tf]);
                 box("on");
                 title(titles(i));
                 xlabel(strcat(obj.VariableName," (",obj.VariableUnit,")"));

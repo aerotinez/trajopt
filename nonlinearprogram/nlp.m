@@ -1,22 +1,22 @@
 classdef nlp < handle
-    properties (Access = public)
-        Mesh;
+    properties (GetAccess = public, SetAccess = private)
         Variables;
+        Mesh;
         Aeq;
         beq;
         lb;
         ub;
     end
-    properties (Access = private)
-        CostFunction;
+    properties (Access = protected)
+        Cost;
         Constraints; 
     end
     methods (Access = public)
-        function obj = nlp(mesh,vars,cost_function,constraints,Aeq,beq,lb,ub)
+        function obj = nlp(variables,mesh,cost,constraints,Aeq,beq,lb,ub)
             arguments
+                variables (1,1) nlpvars;
                 mesh (1,1) nlpmesh;
-                vars (1,1) nlpvars;
-                cost_function ocpcost;
+                cost ocpcost;
                 constraints ocpcon;
                 Aeq (:,:) double = [];
                 beq (:,1) double = [];
@@ -24,48 +24,61 @@ classdef nlp < handle
                 ub (:,1) double = [];
             end
             obj.Mesh = mesh;
-            obj.Variables = vars;
-            obj.CostFunction = cost_function;
+            obj.Variables = variables;
+            obj.Cost = cost;
             obj.Constraints = constraints;
             obj.Aeq = Aeq;
             obj.beq = beq;
             obj.lb = lb;
             obj.ub = ub;
         end
-        function solve(obj,dynfun,opts)
-            f = @obj.objective;
-            z0 = obj.pack();
-            nonlcon = @(z)obj.nonlcon(dynfun,z);
-            z = fmincon(f,z0,[],[],obj.Aeq,obj.beq,obj.lb,obj.ub,nonlcon,opts);
-            [t0,tf,x,u] = obj.unpack(z);
-            ist0free = obj.Variables.IsInitialTimeFree;
-            istfree = obj.Variables.IsFinalTimeFree;
-            obj.Variables = nlpvars(x,u,t0,ist0free,tf,istfree);
+        function solve(obj,opts)
+            fcost = @obj.objective;
+            fcon = @obj.nonlcon;
+            z0 = obj.Variables.get();
+            z = fmincon(fcost,z0,[],[],obj.Aeq,obj.beq,obj.lb,obj.ub,fcon,opts);
+            obj.Variables.set(z); 
         end
+        function fig = plot(obj,rows,cols)
+            results = obj.interpolate();
+            t = results.Time;
+            z = [
+                results.State;
+                results.Control;
+                ];
+            fig = obj.Variables.plot(obj.Mesh,rows,cols);
+            axelist = flipud(fig.Children.Children);
+            for i = 1:numel(axelist)
+                hold(axelist(i),'on');
+                l = plot(axelist(i),t,z(i,:),"k","LineWidth",2);
+                uistack(l,'bottom');
+                hold(axelist(i),'off');
+            end
+        end
+    end 
+    methods (Access = private)
         function J = objective(obj,z)
-            [t0,tf,x,u] = obj.unpack(z);
+            [t0,tf,x,u] = obj.Variables.unpack(z);
             x0 = x(:,1);
             xf = x(:,end);
-            M = obj.CostFunction.Mayer(x0,t0,xf,tf);
-            w = obj.CostFunction.Lagrange(x,u).';
+            M = obj.Cost.Mayer(x0,t0,xf,tf);
+            w = obj.Cost.Lagrange(x,u).';
             dm = diff(obj.Mesh.Mesh);
-            b = (1/2).*sum([dm(1:end - 1),0;0,dm(2:end)],1);
-            h = dm.*(tf - t0);
-            q = diag(h)*w;
+            dt = (tf - t0);
+            b = (1/2).*sum([dm,0;0,dm],1);
+            q = dt.*w;
             L = b*q;
             J = M + L;
         end
-        function [C,Ceq] = nonlcon(obj,Cdyn,z)
+        function [C,Ceq] = nonlcon(obj,z)
             C = [];
-            [t0,tf,x,u] = obj.unpack(z);
-            h = diff(obj.Mesh.Mesh(1:end-1)).*(tf - t0);
-            pdyn = [obj.Constraints.Dynamics.Parameters.Value].';
-            fdyn = @(x,u)obj.Constraints.Dynamics.Plant(x,u,0,pdyn);
-            x0 = x(:,1:end - 1);
-            u0 = u(:,1:end - 1);
-            xf = x(:,2:end);
-            uf = u(:,2:end);
-            Ceq = reshape(Cdyn(fdyn,x0,u0,xf,uf,h),[],1);
+            Ceq = [
+                obj.dynamicConstraints(z);
+            ];
         end
-    end 
+    end
+    methods (Access = protected, Abstract)
+        Ceq = dynamicConstraints(obj,z);
+        results = interpolate(obj);
+    end
 end

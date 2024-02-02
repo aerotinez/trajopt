@@ -1,7 +1,6 @@
 classdef ocpcon
     properties (GetAccess = public, SetAccess = private)
         Dynamics;
-        Path; 
     end
     properties (Access = private)
         Vars;
