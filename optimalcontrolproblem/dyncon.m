@@ -24,7 +24,7 @@ classdef dyncon
             [t,x,u] = obj.Vars.sym();
             xd = diff(x,t);
             consoletitle('Dynamics','=');
-            arrayfun(@disp,xd == obj.Plant(x,u));
+            arrayfun(@disp,xd == simplify(expand(obj.Plant(x,u))));
         end 
     end 
 end

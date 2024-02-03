@@ -38,23 +38,7 @@ classdef nlp < handle
             z0 = obj.Variables.get();
             z = fmincon(fcost,z0,[],[],obj.Aeq,obj.beq,obj.lb,obj.ub,fcon,opts);
             obj.Variables.set(z); 
-        end
-        function fig = plot(obj,rows,cols)
-            results = obj.interpolate();
-            t = results.Time;
-            z = [
-                results.State;
-                results.Control;
-                ];
-            fig = obj.Variables.plot(obj.Mesh,rows,cols);
-            axelist = flipud(fig.Children.Children);
-            for i = 1:numel(axelist)
-                hold(axelist(i),'on');
-                l = plot(axelist(i),t,z(i,:),"k","LineWidth",2);
-                uistack(l,'bottom');
-                hold(axelist(i),'off');
-            end
-        end
+        end 
     end 
     methods (Access = private)
         function J = objective(obj,z)
@@ -79,6 +63,8 @@ classdef nlp < handle
     end
     methods (Access = protected, Abstract)
         Ceq = dynamicConstraints(obj,z);
-        results = interpolate(obj);
+    end
+    methods (Access = public, Abstract)
+        fig = plot(rows,cols);
     end
 end
