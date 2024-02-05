@@ -22,34 +22,27 @@ classdef DirectCollocation < nlp
             Ceq = obj.defects(z);
         end
         function res = interpolate(obj)
-            t0 = obj.Variables.InitialTime;
-            tf = obj.Variables.FinalTime;
-            ns = 1000;
-            t = linspace(t0 + 1/ns,tf - 1/ns,ns - 2);
-            x = cell2mat(arrayfun(@obj.interpolateState,t,'uniform',0));
-            x = [obj.Variables.State(:,1),x,obj.Variables.State(:,end)];
-            u = cell2mat(arrayfun(@obj.interpolateControl,t,'uniform',0));
-            u = [obj.Variables.Control(:,1),u,obj.Variables.Control(:,end)];
-            t = [t0,t,tf];
-            res = struct('Time',t,'State',x,'Control',u);
+            tnodes = obj.getTimes();
+            t0 = tnodes(:,1:end - 1).';
+            tf = tnodes(:,2:end).'; 
+            ns = 100;
+            ft = @(t0,tf)linspace(t0,tf,ns);
+            tc = arrayfun(ft,t0,tf,'UniformOutput',false);
+            t0c = num2cell(t0);
+            tfc = num2cell(tf);
+            fx = @(t,t0,tf)obj.interpolateState(t,t0,tf).';
+            x = cell2mat(cellfun(fx,tc,t0c,tfc,'uniform',0)).';
+            fu = @(t,t0,tf)obj.interpolateControl(t,t0,tf).';
+            u = cell2mat(cellfun(fu,tc,t0c,tfc,'uniform',0)).';
+            t = cell2mat(tc.');
+            res = struct('Time',t,'State',x,'Control',u); 
         end
         function t = getTimes(obj)
             t0 = obj.Variables.InitialTime;
             tf = obj.Variables.FinalTime;
             m = obj.Mesh.Mesh;
             t = [0,cumsum(diff(m).*(tf - t0))] + t0;
-        end
-        function idx = findIndexOfClosestTime(obj,t)
-            tnodes = sort([obj.getTimes(),t]);
-            if tnodes(end - 1) == tnodes(end)
-                idx = numel(tnodes) - 1;
-                return;
-            end
-            idx = find(tnodes == t) - 1;
-            if size(idx,2) > 1
-                idx = idx(2);
-            end
-        end
+        end 
     end
     methods (Access = protected, Abstract)
         Ceq = defects(obj,z);
