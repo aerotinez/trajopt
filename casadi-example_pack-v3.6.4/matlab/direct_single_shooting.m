@@ -38,7 +38,7 @@ xdot = [(1-x2^2)*x1 - x2 + u; x1];
 L = x1^2 + x2^2 + u^2;
 
 % Formulate discrete time dynamics
-if false
+if true
    % CVODES from the SUNDIALS suite
    dae = struct('x',x,'p',u,'ode',xdot,'quad',L);
    F = integrator('F', 'cvodes', dae, 0, T/N);

@@ -17,7 +17,7 @@
 %     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %
 %
-clear all
+clear
 import casadi.*
 % Declare variables (use simple, efficient DAG)
 x0=SX.sym('x0'); x1=SX.sym('x1');
@@ -104,12 +104,12 @@ Solver = 'nlpsol';
 
 % Solver options
 opts = struct;
-if Solver=='nlpsol',
+if isequal(Solver,'nlpsol')
     opts.nlpsol = 'ipopt';
     opts.nlpsol_options.ipopt.hessian_approximation = 'limited-memory';
-elseif Solver=='newton',
+elseif isequal(Solver,'newton')
     opts.linear_solver = 'csparse';
-elseif Solver=='kinsol',
+elseif isequal(Solver,'kinsol')
     opts.linear_solver_type = 'user_defined';
     opts.linear_solver = 'csparse';
     opts.max_iter = 1000;
@@ -119,13 +119,14 @@ end
 solver = rootfinder('solver', Solver, rfp, opts);
 
 % Solve the problem
-X_sol = getfield(solver('x0',0),'x');
+sol = solver('x0',0);
+X_sol = sol.x;
 
 % Time grid for visualization
-tgrid = linspace(0,tf,100);
+tgrid = linspace(0,tf,1000);
 
 % Simulator to get optimal state and control trajectories
-simulator = integrator('simulator', 'cvodes', dae, tgrid);
+simulator = integrator('simulator', 'cvodes', dae, 0, tgrid);
 
 % Simulate to get the trajectories
 sol = full(getfield(simulator('x0',X_sol(1:4)),'xf'));

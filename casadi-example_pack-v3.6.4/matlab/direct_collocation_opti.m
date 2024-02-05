@@ -26,7 +26,7 @@ import casadi.*
 d = 3;
 
 % Get collocation points
-tau = collocation_points(d, 'legendre');
+tau = collocation_points(d,'legendre');
 
 % Collocation linear maps
 [C,D,B] = collocation_coeff(tau);
