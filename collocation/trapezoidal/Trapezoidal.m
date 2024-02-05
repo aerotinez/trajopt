@@ -1,30 +1,26 @@
 classdef Trapezoidal < DirectCollocation
     methods (Access = public)
         function fig = plotError(obj,rows,cols)
-            f = obj.Constraints.Dynamics.Plant;
-            yd = @obj.interpolateStateDerivative;
             tnodes = obj.getTimes();
             t0 = tnodes(1:end - 1);
             tf = tnodes(2:end);
-            ns = 100;
-            nx = obj.Variables.NumStates;
-            N = obj.Variables.NumPoints;
-            t_err = zeros(1,ns*(N - 1));
-            x_err = zeros(nx,ns*(N - 1));
-            for i = 1:N - 1
-                fx = @(t)obj.interpolateState(t,t0(i),tf(i));
-                fu = @(t)obj.interpolateControl(t,t0(i),tf(i));
-                fe = @(t,y)abs(yd(t,t0(i),tf(i)) - f(fx(t),fu(t)));
-                tspan = linspace(t0(i),tf(i),ns);
-                [ti,yi] = ode45(fe,tspan,zeros(nx,1));
-                t_err(:,ns*i - ns + 1:ns*i) = ti.';
-                x_err(:,ns*i - ns + 1:ns*i) = yi.';
-            end 
+            c = cell2mat(arrayfun(@obj.discretizationError,t0,tf,'uniform',0));
+            t_err = [c.Time];
+            x_err = [c.State]; 
             fig = tiledlayout(rows,cols);
-            for i = 1:nx
+            tname = obj.Variables.VariableName;
+            tunits = obj.Variables.VariableUnit;
+            tstr = strcat(tname,sprintf(" (%s)",tunits));
+            fystr = @(name,units)sprintf("%s error (%s)",name,units);
+            for i = 1:obj.Variables.NumStates
                 nexttile;
-                plot(t_err,x_err(i,:));
+                plot(t_err,x_err(i,:),'k');
                 xlim([tnodes(1),tnodes(end)]);
+                title(strcat(obj.Variables.StateNames(i)," error"));
+                xlabel(tstr);
+                name = obj.Variables.StateUnitName(i);
+                units = obj.Variables.StateUnits(i);
+                ylabel(fystr(name,units));
             end
         end
     end 
@@ -80,6 +76,17 @@ classdef Trapezoidal < DirectCollocation
             a1 = (f0 - ff)./(t0 - tf);
             a0 = -(f0.*tf - ff.*t0)./(t0 - tf);
             x_dot = a1.*ti + a0;
+        end
+        function err = discretizationError(obj,t0,tf)
+            f = obj.Constraints.Dynamics.Plant;
+            yd = @obj.interpolateStateDerivative;
+            ns = 100;
+            fx = @(t)obj.interpolateState(t,t0,tf);
+            fu = @(t)obj.interpolateControl(t,t0,tf);
+            fe = @(t,y)abs(yd(t,t0,tf) - f(fx(t),fu(t)));
+            tspan = linspace(t0,tf,ns);
+            [t_err,err] = ode45(fe,tspan,zeros(obj.Variables.NumStates,1));
+            err = struct('Time',t_err.','State',err.');
         end
     end
 end
