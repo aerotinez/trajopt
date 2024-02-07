@@ -58,10 +58,10 @@ classdef DirectCollocation < handle
             obj.validateState(x(:,1));
             if isequal(size(x),[obj.NumStates,1])
                 obj.State = repmat(x,1,obj.NumNodes);
-                return;
-            end
-            obj.validateNodes(x);
-            obj.State = x;
+            else
+                obj.validateNodes(x);
+                obj.State = x;
+            end 
             for i = 1:obj.NumNodes
                 obj.Problem.set_initial(obj.X{i},obj.State(:,i));
             end
@@ -74,10 +74,10 @@ classdef DirectCollocation < handle
             obj.validateControl(u(:,1));
             if isequal(size(u),[obj.NumControls,1])
                 obj.Control = repmat(u,1,obj.NumNodes);
-                return;
-            end
-            obj.validateNodes(u);
-            obj.Control = u;
+            else
+                obj.validateNodes(u);
+                obj.Control = u;
+            end 
             for i = 1:obj.NumNodes
                 obj.Problem.set_initial(obj.U{i},obj.Control(:,i));
             end
@@ -271,7 +271,7 @@ classdef DirectCollocation < handle
                 J = J + M; 
             end
         end
-        function solve(obj,solver)
+        function varargout = solve(obj,solver)
             arguments
                 obj (1,1) DirectCollocation;
                 solver (1,1) string = "ipopt";
@@ -290,6 +290,9 @@ classdef DirectCollocation < handle
                 obj.setFinalTime(sol.value(obj.Tf));
             end
             obj.setTime();
+            if nargout > 0
+                varargout{1} = sol;
+            end
         end
         function [t,x,u] = interpolate(obj)
             t = obj.interpolateTime();

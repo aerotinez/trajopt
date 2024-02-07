@@ -30,12 +30,12 @@ objective = ObjectiveFunction();
 objective.setLagrange(1,x,F);
 
 %% Mesh
-ns = 10;
+ns = 20;
 M = ns + 1;
 mesh = linspace(0,1,M);
 
 %% NLP
-nlp = Trapezoidal(objective,plant,mesh);
+nlp = HermiteSimpson(objective,plant,mesh);
 nlp.setState([0;0]);
 nlp.setControl(0);
 nlp.setParameters(1);
@@ -47,6 +47,8 @@ nlp.setControlBounds(-1,1);
 nlp.setInitialTime(0);
 nlp.setFinalTimeGuess(10);
 nlp.setFinalTimeLowerBound(0);
+nlp.setMidState([0;0]);
+nlp.setMidControl(0);
 
 %% Solution
 nlp.solve();
