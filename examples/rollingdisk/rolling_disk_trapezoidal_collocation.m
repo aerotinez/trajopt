@@ -15,7 +15,7 @@ pitch_rate = dae.add_x('theta_dot');
 
 % Define inputs
 My = dae.add_u('tau_y');
-Mz = dae.add_u('tau_z');
+Mx = dae.add_u('tau_x');
 
 % Define parameters
 gravity = dae.add_p('g');
@@ -35,7 +35,7 @@ x = [
 
 u = [
     My;
-    Mz
+    Mx
 ];
 
 p = [
@@ -58,23 +58,43 @@ plant = dae.create('plant', {'x', 'u', 'p'}, {'ode'});
 
 %% Define objective function
 objective = ObjectiveFunction();
-objective.setLagrange(1,x,u);
+ctf = 1E-02;
+objective.setLagrange(ctf + (1/2).*[My,Mx]*[My;Mx],x,u);
 
 %% Mesh
-ns = 100;
+ns = 51;
 M = ns + 1;
 mesh = linspace(0,1,M);
 
 %% NLP
+
+% determine bounds
+m = 7;
+r = 0.297;
+v = 110/3.6;
+w = v/r;
+ap = deg2rad(1000);
+al = deg2rad(1000);
+Ixz = (1/4)*m*r^2;
+Iy = (1/2)*m*r^2;
+My = Iy*ap;
+Mz = Ixz*al;
+px = 300;
+py = 1;
+
 nlp = HermiteSimpson(objective,plant,mesh);
 nlp.setState([0;0;0;0;0;0;0]);
 nlp.setControl([0;0]);
-nlp.setParameters([9.81;7;0.297]);
+nlp.setParameters([9.81;m;r]);
 nlp.setInitialState([0;0;0;0;0;0;0]);
-nlp.setFinalState([10;1;0;0;0;0;0]);
-nlp.setControlBounds([-1;-1],[1;1]);
+nlp.setFinalState([px;py;0;0;0;0;0]);
+lb = -[inf,inf,deg2rad(90),deg2rad(90),inf,inf,inf].';
+ub = [inf,inf,deg2rad(90),deg2rad(90),inf,inf,inf].';
+nlp.setStateBounds(lb,ub);
+nlp.setControlBounds(-[My;Mz],[My;Mz]);
 nlp.setInitialTime(0);
-nlp.setFinalTimeGuess(30);
+% nlp.setFinalTime(1.5);
+nlp.setFinalTimeGuess(40);
 nlp.setFinalTimeLowerBound(0);
 nlp.setMidState([0;0;0;0;0;0;0]);
 nlp.setMidControl([0;0]);
@@ -104,7 +124,7 @@ nlp.setStateUnit(state_unit);
 
 control_name = [
     "Pitch torque";
-    "Yaw torque"
+    "Lean torque"
 ];
 nlp.setControlName(control_name);
 control_unit = [

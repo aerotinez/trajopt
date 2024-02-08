@@ -100,79 +100,92 @@ classdef HermiteSimpson < DirectCollocation
         end 
     end
     methods (Access = protected)
-        function defect(obj,i)
-            x0 = obj.X{i};
-            xm = obj.Xm{i};
-            xf = obj.X{i + 1};
-            u0 = obj.U{i};
-            um = obj.Um{i};
-            uf = obj.U{i + 1};
-            p0 = obj.Parameters(:,i);
-            pf = obj.Parameters(:,i + 1);
+        function defect(obj,k)
+            x0 = obj.X{k};
+            xm = obj.Xm{k};
+            xf = obj.X{k + 1};
+            u0 = obj.U{k};
+            um = obj.Um{k};
+            uf = obj.U{k + 1};
+            p0 = obj.Parameters(:,k);
+            pf = obj.Parameters(:,k + 1);
             f0 = obj.Plant(x0,u0,p0);
             fm = obj.Plant(xm,um,p0);
             ff = obj.Plant(xf,uf,pf);
             [t0,tf] = obj.getTimes(); 
-            h = (obj.Mesh(i + 1) - obj.Mesh(i))*(tf - t0);
+            h = (obj.Mesh(k + 1) - obj.Mesh(k))*(tf - t0);
             nx = obj.NumStates;
             Ch = xm - (1/2).*(xf + x0) - (h./8).*(f0 - ff);
             Cs = xf - x0 - (h./6).*(ff + 4.*fm + f0);
             obj.Problem.subject_to(Ch == zeros(nx,1));
             obj.Problem.subject_to(Cs == zeros(nx,1));
         end
-        function x = interpolateState(obj,i)
-            x0 = obj.State(:,i);
-            xf = obj.State(:,i + 1);
-            u0 = obj.Control(:,i);
-            uf = obj.Control(:,i + 1);
-            p0 = obj.Parameters(:,i);
-            pf = obj.Parameters(:,i + 1);
+        function x = interpolateState(obj,k)
+            x0 = obj.State(:,k);
+            xm = obj.MidState(:,k);
+            xf = obj.State(:,k + 1);
+            u0 = obj.Control(:,k);
+            um = obj.MidControl(:,k);
+            uf = obj.Control(:,k + 1);
+            p0 = obj.Parameters(:,k);
+            pf = obj.Parameters(:,k + 1);
             f0 = full(obj.Plant(x0,u0,p0));
+            fm = full(obj.Plant(xm,um,p0));
             ff = full(obj.Plant(xf,uf,pf));
-            t0 = obj.Time(i);
-            tf = obj.Time(i + 1);
-            t = linspace(0,tf - t0,obj.ns);
+            t0 = obj.Time(k);
+            tf = obj.Time(k + 1);
             h = tf - t0;
+            t = linspace(0,h,obj.ns);
             x = zeros(obj.NumStates,obj.ns);
             for i = 1:obj.NumStates
                 A = [
                     1,0,0,0;
                     0,1,0,0;
+                    1,h/2,h^2/4,h^3/8;
+                    0,1,h,(3*h^2)/4;
                     1,h,h^2,h^3;
                     0,1,2*h,3*h^2
                 ];
+
                 b = [
                     x0(i);
                     f0(i);
+                    xm(i);
+                    fm(i);
                     xf(i);
                     ff(i)
-                    ];
-                a = A\b;
-                x(i,:) = a(1) + a(2).*t + a(3).*t.^2 + a(4).*t.^3;
+                ];
+
+                c = A\b;
+
+                x(i,:) = c(1) + c(2).*t + c(3).*t.^2 + c(4).*t.^3;
             end
         end
-        function u = interpolateControl(obj,i)
-            u0 = obj.Control(:,i);
-            um = obj.MidControl(:,i);
-            uf = obj.Control(:,i + 1);
-            t0 = obj.Time(i);
-            tf = obj.Time(i + 1);
-            tm = (t0 + tf)/2;
-            t = linspace(t0,tf,obj.ns);
+        function u = interpolateControl(obj,k)
+            u0 = obj.Control(:,k);
+            um = obj.MidControl(:,k);
+            uf = obj.Control(:,k + 1);
+            t0 = obj.Time(k);
+            tf = obj.Time(k + 1);
+            h = tf - t0;
+            t = linspace(0,h,obj.ns);
             u = zeros(obj.NumControls,obj.ns);
             for i = 1:obj.NumControls
                 A = [
-                    t0^2, t0, 1;
-                    tm^2, tm, 1;
-                    tf^2, tf, 1 
+                    1,0,0;
+                    1,h/2,h^2/4;
+                    1,h,h^2
                 ];
+
                 b = [
                     u0(i);
                     um(i);
-                    uf(i);
+                    uf(i)
                 ];
-                a = A\b;
-                u(i,:) = a(3) + a(2).*t + a(1).*t.^2;
+
+                c = A\b;
+
+                u(i,:) = c(1) + c(2).*t + c(3).*t.^2;
             end
         end
     end
