@@ -50,7 +50,7 @@ objective = ObjectiveFunction();
 objective.setLagrange(1,x,u);
 
 %% Mesh
-ns = 25;
+ns = 10;
 M = ns + 1;
 mesh = linspace(0,1,M);
 
