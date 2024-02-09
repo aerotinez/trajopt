@@ -28,22 +28,22 @@ classdef CollocationVariable < handle
                 problem (1,1) CollocationProblem;
                 name (1,1) string;
                 unit (1,1) Unit;
-                value double;
-                initial (1,1) double = double.empty(1,1);
-                final (1,1) double = double.empty(1,1);
-                lower_bound (1,1) double = -inf;
-                upper_bound (1,1) double = inf;
+                value (1,:) double;
+                initial (1,:) double {mustBeScalarOrEmpty} = double.empty(1,0);
+                final (1,:) double {mustBeScalarOrEmpty} = double.empty(1,0);
+                lower (1,1) double = -inf;
+                upper (1,1) double = inf;
             end
             obj.Problem = problem;
             obj.Name = name;
             obj.Unit = unit;
+            obj.NumNodes = obj.Problem.NumNodes;
             obj.initialize();
-            obj.Value = value;
+            obj.set(value);
             obj.InitialValue = initial;
             obj.FinalValue = final;
             obj.LowerBound = lower;
             obj.UpperBound = upper;
-            obj.NumNodes = obj.Problem.NumNodes;
         end
         function x = get(obj)
             x = obj.Variables;
@@ -51,7 +51,7 @@ classdef CollocationVariable < handle
         function set(obj,value)
             obj.validateNodes(value);
             obj.Value = value;
-            f = @(i,v)obj.Problem.Problem.set_initial(obj.Variable{i},v);
+            f = @(i,v)obj.Problem.Problem.set_initial(obj.Variables{i},v);
             arrayfun(f,1:obj.NumNodes,value);
         end
     end
