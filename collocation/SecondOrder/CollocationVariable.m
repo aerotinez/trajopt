@@ -8,11 +8,7 @@ classdef CollocationVariable < handle
         FinalValue;
         LowerBound;
         UpperBound;
-    end
-    properties (Access = private)
-        Variables;
-        NumNodes;
-    end
+    end 
     methods (Access = public)
         function obj = CollocationVariable( ...
             problem, ...
@@ -37,34 +33,23 @@ classdef CollocationVariable < handle
             obj.Problem = problem;
             obj.Name = name;
             obj.Unit = unit;
-            obj.NumNodes = obj.Problem.NumNodes;
-            obj.initialize();
             obj.set(value);
             obj.InitialValue = initial;
             obj.FinalValue = final;
             obj.LowerBound = lower;
             obj.UpperBound = upper;
-        end
-        function x = get(obj)
-            x = obj.Variables;
-        end
+        end 
         function set(obj,value)
             obj.validateNodes(value);
-            obj.Value = value;
-            f = @(i,v)obj.Problem.Problem.set_initial(obj.Variables{i},v);
-            arrayfun(f,1:obj.NumNodes,value);
+            obj.Value = value; 
         end
     end
     methods (Access = private)
         function validateNodes(obj,x)
-            if numel(x) ~= obj.NumNodes
+            if numel(x) ~= obj.Problem.NumNodes
                 msg = "X must have as many columns as there are nodes.";
                 error(msg);
             end
-        end
-        function initialize(obj)
-            f = @(i)obj.Problem.Problem.variable(1);
-            obj.Variables = arrayfun(f,1:obj.NumNodes,"UniformOutput",false); 
-        end
+        end 
     end
 end

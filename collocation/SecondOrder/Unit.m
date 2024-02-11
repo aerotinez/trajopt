@@ -12,5 +12,8 @@ classdef Unit
             obj.Name = name;
             obj.Symbol = symbol;
         end
+        function str = toString(obj)
+            str = obj.Name + " (" + obj.Symbol + ")";
+        end
     end
 end
