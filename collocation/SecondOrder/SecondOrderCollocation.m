@@ -32,6 +32,10 @@ classdef SecondOrderCollocation < handle
                 ];
             obj.Objective = objfun;
             obj.Plant = plant;
+            obj.Plant.Coordinates.setInitial();
+            obj.Plant.Speeds.setInitial();
+            obj.Plant.Coordinates.setFinal();
+            obj.Plant.Speeds.setFinal();
             obj.InitialTime = t0;
             obj.FinalTime = tf;
             obj.Q = obj.Plant.Coordinates.getVariables();
@@ -40,6 +44,22 @@ classdef SecondOrderCollocation < handle
             obj.P = obj.Plant.Parameters;
             obj.X = cellfun(@(q,u)[q;u],obj.Q,obj.U,"uniform",0);
             obj.Time = linspace(t0.Value,tf.Value,obj.Problem.NumNodes);
+        end
+        function varargout = solve(obj,solver)
+            arguments
+                obj (1,1) SecondOrderCollocation;
+                solver (1,1) string = "ipopt";
+            end
+            obj.collocationConstraints();
+            J = obj.cost();
+            obj.Problem.minimize(J);
+            obj.Problem.solver(char(solver));
+            sol = obj.Problem.Problem.solve();
+            obj.setFromSol(sol); 
+            obj.setTime(); 
+            if nargout > 0
+                varargout{1} = sol;
+            end
         end
         function fig = plotStateNodes(obj,rows,cols)
             fig = figure();
@@ -79,11 +99,7 @@ classdef SecondOrderCollocation < handle
             end
         end
     end
-    methods (Access = protected) 
-        function [t0,tf] = getTimes(obj)
-            t0 = obj.InitialTime.get();
-            tf = obj.FinalTime.get();
-        end
+    methods (Access = private)
         function J = cost(obj)
             [t0,tf] = obj.getTimes();
             J = 0;
@@ -96,6 +112,53 @@ classdef SecondOrderCollocation < handle
             M = obj.Objective.Mayer(t0,obj.X{1},tf,obj.X{end});
             J = J + M; 
         end
+        function collocationConstraints(obj)
+            for k = 1:obj.Problem.NumNodes - 1
+                obj.defect(k);
+            end
+        end
+        function setTime(obj)
+            t0 = obj.InitialTime.Value;
+            tf = obj.FinalTime.Value;
+            obj.Time = linspace(t0,tf,obj.Problem.NumNodes);
+        end
+        function setCoordinates(obj,sol)
+            q = reshape(sol.value([obj.Q{:}]),[],obj.Problem.NumNodes);
+            obj.Plant.Coordinates.setValues(q);
+        end
+        function setSpeeds(obj,sol)
+            u = reshape(sol.value([obj.U{:}]),[],obj.Problem.NumNodes);
+            obj.Plant.Speeds.setValues(u);
+        end
+        function setControls(obj,sol)
+            f = reshape(sol.value([obj.F{:}]),[],obj.Problem.NumNodes);
+            obj.Plant.Controls.setValues(f);
+        end
+        function setInitialTime(obj,sol)
+            if ~isempty(obj.InitialTime.Problem)
+                T0 = sol.value(obj.InitialTime.get());
+                obj.InitialTime.set(sol.value(T0));
+            end
+        end
+        function setFinalTime(obj,sol)
+            if ~isempty(obj.FinalTime.Problem)
+                TF = sol.value(obj.FinalTime.get());
+                obj.FinalTime.set(sol.value(TF));
+            end
+        end
+        function setFromSol(obj,sol)
+            obj.setCoordinates(sol);
+            obj.setSpeeds(sol);
+            obj.setControls(sol);
+            obj.setInitialTime(sol);
+            obj.setFinalTime(sol); 
+        end
+    end
+    methods (Access = protected) 
+        function [t0,tf] = getTimes(obj)
+            t0 = obj.InitialTime.get();
+            tf = obj.FinalTime.get();
+        end 
     end
     methods (Access = protected, Abstract)
         defect(obj,k);

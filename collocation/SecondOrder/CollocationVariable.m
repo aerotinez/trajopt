@@ -33,13 +33,16 @@ classdef CollocationVariable < handle
             obj.Problem = problem;
             obj.Name = name;
             obj.Unit = unit;
-            obj.set(value);
+            obj.setValue(value);
             obj.InitialValue = initial;
             obj.FinalValue = final;
             obj.LowerBound = lower;
             obj.UpperBound = upper;
         end 
-        function set(obj,value)
+        function setValue(obj,value)
+            if size(value,2) == 1
+                value = repmat(value,1,obj.Problem.NumNodes);
+            end
             obj.validateNodes(value);
             obj.Value = value; 
         end

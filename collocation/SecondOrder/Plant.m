@@ -55,6 +55,9 @@ classdef Plant < handle
     end
     methods (Access = private)
         function p_out = validateParameters(obj,p)
+            if size(p,2) == 1
+                p = repmat(p,1,obj.Problem.NumNodes);
+            end
             if size(p,2) ~= obj.Problem.NumNodes
                 msg = "P must have as many columns as there are nodes.";
                 error(msg);
