@@ -16,15 +16,10 @@ classdef TrapezoidalSecondOrder < SecondOrderCollocation
             qdd0 = obj.Plant.KinematicRates(q0,u0,ud0,p0);
             qddf = obj.Plant.KinematicRates(qf,uf,udf,pf);
             h = obj.Time(k + 1) - obj.Time(k);
-            H0 = [eye(3),zeros(3,1)]*hermitePolMat(0,4);
-            Hf = [eye(3),zeros(3,1)]*hermitePolMat(h,4);
-            A = [H0;Hf];
-            for i = 1:obj.Plant.NumCoordinates
-                b = [q0(i);qd0(i);qdd0(i);qf(i);qdf(i);qddf(i)];
-                a = A\b;
-                xf = [qf(i);qdf(i);qddf(i)];
-                obj.Problem.Problem.subject_to(xf - Hf*a == 0); 
-            end
+            Cq = qf - h.*qd0 - (h*h/6).*(qddf + 2.*qdd0);
+            Cqd = qdf - qd0 - (h/2).*(qddf + qdd0);
+            nq = obj.Plant.NumCoordinates;
+            obj.Problem.Problem.subject_to([Cq;Cqd] == zeros(2*nq,1)); 
         end
     end
 end

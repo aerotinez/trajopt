@@ -33,8 +33,8 @@ classdef SecondOrderCollocation < handle
             obj.Objective = objfun;
             obj.Plant = plant;
             obj.Plant.Coordinates.setInitial();
-            obj.Plant.Speeds.setInitial();
             obj.Plant.Coordinates.setFinal();
+            obj.Plant.Speeds.setInitial();
             obj.Plant.Speeds.setFinal();
             obj.InitialTime = t0;
             obj.FinalTime = tf;
@@ -52,8 +52,8 @@ classdef SecondOrderCollocation < handle
             end
             obj.collocationConstraints();
             J = obj.cost();
-            obj.Problem.minimize(J);
-            obj.Problem.solver(char(solver));
+            obj.Problem.Problem.minimize(J);
+            obj.Problem.Problem.solver(char(solver));
             sol = obj.Problem.Problem.solve();
             obj.setFromSol(sol); 
             obj.setTime(); 
@@ -109,7 +109,7 @@ classdef SecondOrderCollocation < handle
             dT = diff(obj.Problem.Mesh);
             b = (1/2).*sum([dT,0;0,dT],1);
             J = J + b*q;
-            M = obj.Objective.Mayer(t0,obj.X{1},tf,obj.X{end});
+            M = obj.Objective.Mayer(obj.X{1},t0,obj.X{end},tf);
             J = J + M; 
         end
         function collocationConstraints(obj)

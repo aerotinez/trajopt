@@ -58,7 +58,12 @@ classdef CollocationVector < handle
                 for i = 1:numel(obj.Variables)
                     lb = obj.Variables(i).LowerBound;
                     ub = obj.Variables(i).UpperBound;
-                    obj.Problem.Problem.subject_to((lb <= obj.X{k}(i)) <= ub); 
+                    if ~isinf(lb)
+                        obj.Problem.Problem.subject_to(lb <= obj.X{k}(i));
+                    end
+                    if ~isinf(ub)
+                        obj.Problem.Problem.subject_to(ub >= obj.X{k}(i));
+                    end
                 end
             end
         end

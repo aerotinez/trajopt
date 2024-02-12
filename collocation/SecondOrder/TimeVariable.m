@@ -65,6 +65,8 @@ classdef TimeVariable < handle
             obj.set(value);
             obj.LowerBound = lower;
             obj.UpperBound = upper;
+            obj.Problem.Problem.subject_to(obj.Variable >= lower);
+            obj.Problem.Problem.subject_to(obj.Variable <= upper);
         end
     end 
 end
