@@ -17,7 +17,7 @@ classdef CollocationVector < handle
             obj.setBounds();
         end
         function x = getValues(obj)
-            x = reshape([obj.Variables.Value].',numel(obj.Variables),[]);
+            x = reshape([obj.Variables.Value].',[],numel(obj.Variables)).';
         end
         function x = getVariables(obj)
             x = obj.X;

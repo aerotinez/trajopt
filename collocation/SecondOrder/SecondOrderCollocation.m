@@ -123,15 +123,15 @@ classdef SecondOrderCollocation < handle
             obj.Time = linspace(t0,tf,obj.Problem.NumNodes);
         end
         function setCoordinates(obj,sol)
-            q = reshape(sol.value([obj.Q{:}]),[],obj.Problem.NumNodes);
+            q = sol.value([obj.Q{:}]);
             obj.Plant.Coordinates.setValues(q);
         end
         function setSpeeds(obj,sol)
-            u = reshape(sol.value([obj.U{:}]),[],obj.Problem.NumNodes);
+            u = sol.value([obj.U{:}]);
             obj.Plant.Speeds.setValues(u);
         end
         function setControls(obj,sol)
-            f = reshape(sol.value([obj.F{:}]),[],obj.Problem.NumNodes);
+            f = sol.value([obj.F{:}]);
             obj.Plant.Controls.setValues(f);
         end
         function setInitialTime(obj,sol)

@@ -9,17 +9,23 @@ classdef TrapezoidalSecondOrder < SecondOrderCollocation
             Ff = obj.F{k + 1};
             p0 = obj.P(:,k);
             pf = obj.P(:,k + 1);
-            qd0 = obj.Plant.Kinematics(q0,u0,p0);
-            qdf = obj.Plant.Kinematics(qf,uf,pf);
             ud0 = obj.Plant.Dynamics(q0,u0,F0,p0);
             udf = obj.Plant.Dynamics(qf,uf,Ff,pf);
-            qdd0 = obj.Plant.KinematicRates(q0,u0,ud0,p0);
-            qddf = obj.Plant.KinematicRates(qf,uf,udf,pf);
-            h = obj.Time(k + 1) - obj.Time(k);
-            Cq = qf - h.*qd0 - (h*h/6).*(qddf + 2.*qdd0);
-            Cqd = qdf - qd0 - (h/2).*(qddf + qdd0);
+            Ju0 = obj.Plant.SpeedJacobian(q0,p0);
+            Jdu0 = obj.Plant.SpeedJacobianRate(q0,u0,p0);
+            Jqdf = obj.Plant.RateJacobian(qf,pf);
+            Juf = obj.Plant.SpeedJacobian(qf,pf);
+            Jduf = obj.Plant.SpeedJacobianRate(qf,uf,pf);
+            qd0 = Ju0*u0;
+            qdd0 = Ju0*ud0 + Jdu0*u0;
+            qddf = Juf*udf + Jduf*uf;
+            [t0,tf] = obj.getTimes(); 
+            h = (obj.Problem.Mesh(k + 1) - obj.Problem.Mesh(k))*(tf - t0);
+            Cq = qf - (q0 + h.*qd0 + (h*h/6).*(qddf + 2.*qdd0));
+            Cu = uf - Jqdf*(qd0 + (h/2).*(qddf + qdd0));
             nq = obj.Plant.NumCoordinates;
-            obj.Problem.Problem.subject_to([Cq;Cqd] == zeros(2*nq,1)); 
+            nu = obj.Plant.NumSpeeds;
+            obj.Problem.Problem.subject_to([Cq;Cu] == zeros(nq + nu,1)); 
         end
     end
 end
