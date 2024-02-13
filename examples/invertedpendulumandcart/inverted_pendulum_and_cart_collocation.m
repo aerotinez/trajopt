@@ -50,7 +50,7 @@ objective = ObjectiveFunction();
 objective.setLagrange(1,x,u);
 
 %% Mesh
-ns = 10;
+ns = 25;
 M = ns + 1;
 mesh = linspace(0,1,M);
 
@@ -59,9 +59,10 @@ nlp = HermiteSimpson(objective,plant,mesh);
 nlp.setState([0;0;0;0]);
 nlp.setControl(0);
 nlp.setParameters([-9.81;0.3;0.5;0.2]);
-nlp.setInitialState([0,deg2rad(-180),0,0]);
-nlp.setFinalState([2,0,0,0]);
-nlp.setControlBounds(-100,100);
+nlp.setInitialState([1,deg2rad(180),0,0]);
+nlp.setFinalState([5,0,0,0]);
+% nlp.setStateUpperBound([10,inf,inf,inf].');
+nlp.setControlBounds(-50,50);
 nlp.setInitialTime(0);
 nlp.setFinalTimeGuess(10);
 nlp.setFinalTimeLowerBound(0);
