@@ -14,7 +14,6 @@ classdef TrapezoidalSecondOrder < SecondOrderCollocation
             h = diff(obj.Problem.Mesh(1:2))*(tf - t0);
 
             qd0 = obj.Plant.Kinematics(q0,u0,p0);
-            qdf = obj.Plant.Kinematics(qf,uf,pf);
             qdd0 = obj.Plant.Dynamics(q0,u0,F0,p0);
             qddf = obj.Plant.Dynamics(qf,uf,Ff,pf);
 
