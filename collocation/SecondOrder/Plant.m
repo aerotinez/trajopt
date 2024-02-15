@@ -5,9 +5,8 @@ classdef Plant < handle
         Speeds;
         Controls;
         Parameters;
-        RateJacobian;
-        SpeedJacobian;
-        SpeedJacobianRate;
+        RatesToSpeeds;
+        Kinematics; 
         Dynamics;
     end
     properties (GetAccess = public, SetAccess = private)
@@ -18,41 +17,32 @@ classdef Plant < handle
     end
     properties (Access = private)
         Q;
+        Qd;
         U;
-        Ud;
         F;
         P;
-    end 
+    end
     methods (Access = public)
-        function obj = Plant(prob,q,u,F,p,Jqd,Ju,Jdu,fd)
+        function obj = Plant(prob,q,u,F,p,fr,fk,fd)
             arguments
                 prob (1,1) CollocationProblem;
-                q (1,1) CollocationVector;
-                u (1,1) CollocationVector;
-                F (1,1) CollocationVector;
+                q (1,1) StateVector;
+                u (1,1) StateVector;
+                F (1,1) StateVector;
                 p double;
-                Jqd (1,1) function_handle;
-                Ju (1,1) function_handle;
-                Jdu (1,1) function_handle;
+                fr (1,1) function_handle;
+                fk (1,1) function_handle; 
                 fd (1,1) function_handle;
             end
             obj.Problem = prob;
             obj.Coordinates = q;
-            obj.NumCoordinates = numel(obj.Coordinates.Variables);
             obj.Speeds = u;
-            obj.NumSpeeds = numel(obj.Speeds.Variables);
             obj.Controls = F;
-            obj.NumControls = numel(obj.Controls.Variables);
             obj.Parameters = obj.validateParameters(p);
-            obj.NumParameters = size(p,1);
-            obj.Q = casadi.MX.sym('q',obj.NumCoordinates);
-            obj.U = casadi.MX.sym('u',obj.NumSpeeds);
-            obj.Ud = casadi.MX.sym('ud',obj.NumSpeeds);
-            obj.F = casadi.MX.sym('F',obj.NumControls);
-            obj.P = casadi.MX.sym('p',obj.NumParameters);
-            obj.RateJacobian = obj.setRateJacobian(Jqd);
-            obj.SpeedJacobian = obj.setSpeedJacobian(Ju);
-            obj.SpeedJacobianRate = obj.setSpeedJacobianRate(Jdu); 
+            obj.setDimensions();
+            obj.initializeInputs();
+            obj.RatesToSpeeds = obj.setRatesToSpeeds(fr);
+            obj.Kinematics = obj.setKinematics(fk); 
             obj.Dynamics = obj.setDynamics(fd); 
         end
     end
@@ -67,32 +57,38 @@ classdef Plant < handle
             end
             p_out = p;
         end
-        function Jqd = setRateJacobian(obj,fJqd)
-            vars = {obj.Q,obj.P};
-            f = fJqd(obj.Q,obj.P);
-            inputs = {'q','p'};
-            outputs = {'Jqd'};
-            Jqd = casadi.Function('fJqd',vars,{f},inputs,outputs);
+        function setDimensions(obj)
+            obj.NumCoordinates = numel(obj.Coordinates.States);
+            obj.NumSpeeds = numel(obj.Speeds.States);
+            obj.NumControls = numel(obj.Controls.States);
+            obj.NumParameters = size(obj.Parameters,1);
         end
-        function Ju = setSpeedJacobian(obj,fJu)
-            vars = {obj.Q,obj.P};
-            f = fJu(obj.Q,obj.P);
-            inputs = {'q','p'};
-            outputs = {'Ju'};
-            Ju = casadi.Function('fJu',vars,{f},inputs,outputs);
+        function initializeInputs(obj)
+            obj.Q = casadi.MX.sym('q',obj.NumCoordinates);
+            obj.Qd = casadi.MX.sym('q_dot',obj.NumCoordinates);
+            obj.U = casadi.MX.sym('u',obj.NumSpeeds);
+            obj.F = casadi.MX.sym('F',obj.NumControls);
+            obj.P = casadi.MX.sym('p',obj.NumParameters);
         end
-        function Jdu = setSpeedJacobianRate(obj,fJdu)
+        function Fr = setRatesToSpeeds(obj,fr)
+            vars = {obj.Q,obj.Qd,obj.P};
+            f = fr(obj.Q,obj.Qd,obj.P);
+            inputs = {'q','q_dot','p'};
+            outputs = {'u'};
+            Fr = casadi.Function('Fr',vars,{f},inputs,outputs);
+        end
+        function Fk = setKinematics(obj,fk)
             vars = {obj.Q,obj.U,obj.P};
-            f = fJdu(obj.Q,obj.U,obj.P);
+            f = fk(obj.Q,obj.U,obj.P);
             inputs = {'q','u','p'};
-            outputs = {'Jdu'};
-            Jdu = casadi.Function('fJdu',vars,{f},inputs,outputs);
+            outputs = {'q_dot'};
+            Fk = casadi.Function('Fk',vars,{f},inputs,outputs);
         end
         function Fd = setDynamics(obj,fd)
             vars = {obj.Q,obj.U,obj.F,obj.P};
             f = fd(obj.Q,obj.U,obj.F,obj.P);
             inputs = {'q','u','F','p'};
-            outputs = {'u_dot'};
+            outputs = {'q_ddot'};
             Fd = casadi.Function('Fd',vars,{f},inputs,outputs);
         end
     end

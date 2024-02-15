@@ -1,4 +1,4 @@
-classdef CollocationVariable < handle
+classdef State < handle
     properties (GetAccess = public, SetAccess = private)
         Problem;
         Name;
@@ -10,7 +10,7 @@ classdef CollocationVariable < handle
         UpperBound;
     end 
     methods (Access = public)
-        function obj = CollocationVariable( ...
+        function obj = State( ...
             problem, ...
             name, ...
             unit, ...
@@ -25,21 +25,21 @@ classdef CollocationVariable < handle
                 name (1,1) string;
                 unit (1,1) Unit;
                 value (1,:) double;
-                initial (1,:) double {mustBeScalarOrEmpty} = double.empty(1,0);
-                final (1,:) double {mustBeScalarOrEmpty} = double.empty(1,0);
-                lower (1,1) double = -inf;
-                upper (1,1) double = inf;
+                initial (1,1) double = NaN;
+                final (1,1) double = NaN;
+                lower (1,1) double = -Inf;
+                upper (1,1) double = Inf;
             end
             obj.Problem = problem;
             obj.Name = name;
             obj.Unit = unit;
-            obj.setValue(value);
+            obj.set(value);
             obj.InitialValue = initial;
             obj.FinalValue = final;
             obj.LowerBound = lower;
             obj.UpperBound = upper;
         end 
-        function setValue(obj,value)
+        function set(obj,value)
             if size(value,2) == 1
                 value = repmat(value,1,obj.Problem.NumNodes);
             end

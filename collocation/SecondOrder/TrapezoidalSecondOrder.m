@@ -1,31 +1,50 @@
 classdef TrapezoidalSecondOrder < SecondOrderCollocation
     methods (Access = protected)
-        function defect(obj,k)
-            q0 = obj.Q{k};
-            qf = obj.Q{k + 1};
-            u0 = obj.U{k};
-            uf = obj.U{k + 1};
-            F0 = obj.F{k};
-            Ff = obj.F{k + 1};
-            p0 = obj.P(:,k);
-            pf = obj.P(:,k + 1);
-            ud0 = obj.Plant.Dynamics(q0,u0,F0,p0);
-            udf = obj.Plant.Dynamics(qf,uf,Ff,pf);
-            Ju0 = obj.Plant.SpeedJacobian(q0,p0);
-            Jdu0 = obj.Plant.SpeedJacobianRate(q0,u0,p0);
-            Jqdf = obj.Plant.RateJacobian(qf,pf);
-            Juf = obj.Plant.SpeedJacobian(qf,pf);
-            Jduf = obj.Plant.SpeedJacobianRate(qf,uf,pf);
-            qd0 = Ju0*u0;
-            qdd0 = Ju0*ud0 + Jdu0*u0;
-            qddf = Juf*udf + Jduf*uf;
-            [t0,tf] = obj.getTimes(); 
-            h = (obj.Problem.Mesh(k + 1) - obj.Problem.Mesh(k))*(tf - t0);
-            Cq = qf - (q0 + h.*qd0 + (h*h/6).*(qddf + 2.*qdd0));
-            Cu = uf - Jqdf*(qd0 + (h/2).*(qddf + qdd0));
+        function defect(obj)
+            q0 = obj.Plant.Coordinates.Variable(:,1:end - 1);
+            qf = obj.Plant.Coordinates.Variable(:,2:end);
+            u0 = obj.Plant.Speeds.Variable(:,1:end - 1);
+            uf = obj.Plant.Speeds.Variable(:,2:end);
+            F0 = obj.Plant.Controls.Variable(:,1:end - 1);
+            Ff = obj.Plant.Controls.Variable(:,2:end);
+            p0 = obj.Plant.Parameters(:,1:end - 1);
+            pf = obj.Plant.Parameters(:,2:end);
+
+            [t0,tf] = obj.getTimes();
+            h = diff(obj.Problem.Mesh(1:2))*(tf - t0);
+
+            qd0 = obj.Plant.Kinematics(q0,u0,p0);
+            qdf = obj.Plant.Kinematics(qf,uf,pf);
+            qdd0 = obj.Plant.Dynamics(q0,u0,F0,p0);
+            qddf = obj.Plant.Dynamics(qf,uf,Ff,pf);
+
             nq = obj.Plant.NumCoordinates;
-            nu = obj.Plant.NumSpeeds;
-            obj.Problem.Problem.subject_to([Cq;Cu] == zeros(nq + nu,1)); 
+
+            A = [
+                eye(2*nq),zeros(2*nq);
+                zeros(nq,2*nq),2.*eye(nq),zeros(nq);
+                zeros(nq,2*nq),2.*eye(nq),6*h.*eye(nq);
+                ];
+
+            B = A\eye(size(A));
+
+            x = [
+                q0;
+                qd0;
+                qdd0;
+                qddf
+                ];
+
+            a = B*x;
+
+            I = eye(nq);
+            Hq = [I,h.*I,(h^2).*I,(h^3).*I];
+            Hqd = [0.*I,I,2*h.*I,(3*h^2).*I];
+
+            obj.Problem.Problem.subject_to(qf - Hq*a == 0);
+
+            f = obj.Plant.RatesToSpeeds;
+            obj.Problem.Problem.subject_to(uf - f(qf,Hqd*a,pf) == 0);
         end
     end
 end

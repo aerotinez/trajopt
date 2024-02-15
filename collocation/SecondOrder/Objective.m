@@ -1,4 +1,4 @@
-classdef CollocationObjective < handle
+classdef Objective < handle
     properties (GetAccess = public, SetAccess = private)
         Lagrange;
         Mayer;
@@ -8,7 +8,7 @@ classdef CollocationObjective < handle
         NumControls;
     end
     methods (Access = public)
-        function obj = CollocationObjective(plant,lagrange,mayer)
+        function obj = Objective(plant,lagrange,mayer)
             arguments
                 plant (1,1) Plant;
                 lagrange (1,1) function_handle = @(x,u) 0;

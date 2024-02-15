@@ -3,11 +3,7 @@ classdef CollocationProblem < handle
         Problem;
         Mesh;
         NumNodes; 
-    end
-    properties (Access = private)
-        InitialTime;
-        FinalTime;
-    end
+    end 
     methods (Access = public)
         function obj = CollocationProblem(ns) 
             arguments
@@ -15,7 +11,7 @@ classdef CollocationProblem < handle
             end
             obj.Problem = casadi.Opti();
             obj.NumNodes = ns + 1;
-            obj.Mesh = linspace(0,1,obj.NumNodes);
+            obj.Mesh = linspace(0,1,obj.NumNodes); 
         end
     end 
 end
