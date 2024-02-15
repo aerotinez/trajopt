@@ -1,95 +1,32 @@
 close("all"); clear; clc;
-import casadi.*
 
-%% Define dae system
-dae = DaeBuilder('inverted_pendulum_and_cart');
+g = -9.81;
+l = 0.3;
+mc = 0.5;
+mp = 0.2;
+params = [g,l,mc,mp].';
 
-% Define states
-position = dae.add_x('x');
-angle = dae.add_x('theta');
-velocity = dae.add_x('v');
-angular_velocity = dae.add_x('omega');
+prob = CollocationProblem(100);
+x0 = zeros(1,prob.NumNodes);
 
-% Define inputs
-force = dae.add_u('F');
+t0 = FixedTime('t0',Unit("time",'s'),0);
+tf = FreeTime(prob,'tf',Unit("time",'s'),10,0);
 
-% Define parameters
-gravity = dae.add_p('g');
-length_pendulum = dae.add_p('l');
-mass_cart = dae.add_p('m_c');
-mass_pendulum = dae.add_p('m_p');
+p = State(prob,'x',Unit("position",'m'),x0,1,3,0,10);
+theta = State(prob,'\theta',Unit("angle",'rad'),x0,deg2rad(180),0);
+v = State(prob,"v_x",Unit("speed","m/s"),x0,0,0);
+w = State(prob,"\omega_y",Unit("speed","rad/s"),x0,0,0);
+x = StateVector([p,theta,v,w].');
 
-% Define differential equations
-x = [
-    position;
-    angle;
-    velocity;
-    angular_velocity;
-];
+force = State(prob,"force",Unit("force","N"),x0,nan,nan,-40,40);
+u = StateVector(force.');
 
-u = force;
+plant = Plant(prob,x,u,params,@invertedPendulumAndCart);
 
-p = [
-    gravity;
-    length_pendulum;
-    mass_cart;
-    mass_pendulum;
-];
-
-xdot = invertedPendulumAndCart(x,u,p);
-dae.set_ode('x',xdot(1));
-dae.set_ode('theta',xdot(2));
-dae.set_ode('v',xdot(3));
-dae.set_ode('omega',xdot(4));
-
-% create Function
-plant = dae.create('plant', {'x','u','p'}, {'ode'});
-
-%% Define objective function
-objective = ObjectiveFunction();
-objective.setLagrange(1,x,u);
-
-%% Mesh
-ns = 25;
-M = ns + 1;
-mesh = linspace(0,1,M);
-
-%% NLP
-nlp = HermiteSimpson(objective,plant,mesh);
-nlp.setState([0;0;0;0]);
-nlp.setControl(0);
-nlp.setParameters([-9.81;0.3;0.5;0.2]);
-nlp.setInitialState([1,deg2rad(180),0,0]);
-nlp.setFinalState([5,0,0,0]);
-% nlp.setStateUpperBound([10,inf,inf,inf].');
-nlp.setControlBounds(-50,50);
-nlp.setInitialTime(0);
-nlp.setFinalTimeGuess(10);
-nlp.setFinalTimeLowerBound(0);
-nlp.setMidState([0;0;0;0]);
-nlp.setMidControl(0);
-
-%% Solution
-nlp.solve();
-state_name = [
-    "Position";
-    "Angle";
-    "Velocity";
-    "Angular velocity";
-];
-nlp.setStateName(state_name);
-state_unit = [
-    "position (m)";
-    "angle (rad)";
-    "speed (m/s)";
-    "speed (rad/s)";
-];
-nlp.setStateUnit(state_unit);
-
-control_name = "Force";
-nlp.setControlName(control_name);
-control_unit = "force (N)";
-nlp.setControlUnit(control_unit);
-
-nlp.plotState(2,2);
-nlp.plotControl(1,1);
+gamma = 1;
+objfun = Objective(plant,@(x,u) 0,@(x0,t0,xf,tf)gamma*tf);
+ 
+prog = HermiteSimpson(prob,objfun,plant,t0,tf);
+prog.solve();
+prog.plotState(2,2);
+prog.plotControl(1,1);

@@ -13,9 +13,12 @@ classdef StateVector < handle
             obj.States = states;
             obj.initialize();
         end
-        function values = getValues(obj)
+        function values = getValues(obj,varargin)
             M = obj.Problem.NumNodes;
             values = reshape([obj.States.Value].',M,[]).';
+            if nargin > 1
+                values = values(:,varargin{1});
+            end
         end
         function names = getNames(obj)
             names = [obj.States.Name].';

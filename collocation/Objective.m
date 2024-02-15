@@ -14,7 +14,7 @@ classdef Objective < handle
                 lagrange (1,1) function_handle = @(x,u) 0;
                 mayer (1,1) function_handle = @(x0,t0,xf,tf) 0;
             end
-            obj.NumStates = plant.NumCoordinates + plant.NumSpeeds;
+            obj.NumStates = plant.NumStates;
             obj.NumControls = plant.NumControls;
             obj.Lagrange = obj.setLagrange(lagrange);
             obj.Mayer = obj.setMayer(mayer);

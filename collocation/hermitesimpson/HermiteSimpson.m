@@ -1,192 +1,138 @@
 classdef HermiteSimpson < DirectCollocation
-    properties (GetAccess = public, SetAccess = private)
-        MidState;
-        MidControl;
-    end
-    properties (Access = private) 
-        Xm;
-        Um;
+    properties (Access = private)
+        MidStates;
+        MidControls;
     end
     methods (Access = public)
-        function obj = HermiteSimpson(objective,plant,mesh)
-            obj = obj@DirectCollocation(objective,plant,mesh);
-            obj.initializeNLPMidStateVariables();
-            obj.initializeNLPMidControlVariables();
-        end
-        function setMidState(obj,x)
-            arguments
-                obj (1,1) DirectCollocation;
-                x double;
-            end
-            obj.validateState(x);
-            if isequal(size(x),[obj.NumStates,1])
-                obj.MidState = repmat(x,1,obj.NumNodes - 1);
-            else
-                obj.validateMidNodes(x);
-                obj.MidState = x;
-            end
-            for i = 1:obj.NumNodes - 1
-                obj.Problem.set_initial(obj.Xm{i},obj.MidState(:,i));
-            end
-        end
-        function setMidControl(obj,u)
-            arguments
-                obj (1,1) DirectCollocation;
-                u double;
-            end
-            obj.validateControl(u);
-            if isequal(size(u),[obj.NumControls,1])
-                obj.MidControl = repmat(u,1,obj.NumNodes - 1);
-            else
-                obj.validateMidNodes(u);
-                obj.MidControl = u;
-            end
-            for i = 1:obj.NumNodes - 1
-                obj.Problem.set_initial(obj.Um{i},obj.MidControl(:,i));
-            end
-        end
-        function setStateLowerBound(obj,lb)
-            setStateLowerBound@DirectCollocation(obj,lb);
-            for i = 1:obj.NumNodes - 1 
-                obj.Problem.subject_to(obj.Xm{i} >= lb);
-            end
-        end
-        function setStateUpperBound(obj,ub)
-            setStateUpperBound@DirectCollocation(obj,ub);
-            for i = 1:obj.NumNodes - 1 
-                obj.Problem.subject_to(obj.Xm{i} <= ub);
-            end
-        end
-        function setControlLowerBound(obj,lb)
-            setControlLowerBound@DirectCollocation(obj,lb);
-            for i = 1:obj.NumNodes - 1 
-                obj.Problem.subject_to(obj.Um{i} >= lb);
-            end
-        end
-        function setControlUpperBound(obj,ub)
-            setControlUpperBound@DirectCollocation(obj,ub);
-            for i = 1:obj.NumNodes - 1 
-                obj.Problem.subject_to(obj.Um{i} <= ub);
-            end
+        function obj = HermiteSimpson(varargin)
+            obj = obj@DirectCollocation(varargin{:});
+            obj.MidStates = obj.initializeMidStates();
+            obj.MidControls = obj.initializeMidControls();
         end
         function solve(obj,solver)
             arguments
-                obj (1,1) DirectCollocation;
-                solver string = "ipopt";
+                obj (1,1) HermiteSimpson;
+                solver (1,1) string = "ipopt";
             end
             sol = solve@DirectCollocation(obj,solver);
-            obj.setMidState(sol.value([obj.Xm{:}]));
-            obj.setMidControl(sol.value([obj.Um{:}]));
+            obj.MidStates.Value = sol.value(obj.MidStates.Variable);
+            obj.MidControls.Value = sol.value(obj.MidControls.Variable);
         end
-    end 
-    methods (Access = private)
-        function initializeNLPMidStateVariables(obj)
-            obj.Xm = cell(1,obj.NumNodes - 1);
-            for i = 1:obj.NumNodes - 1
-                obj.Xm{i} = obj.Problem.variable(obj.NumStates);
-            end
-        end
-        function initializeNLPMidControlVariables(obj)
-            obj.Um = cell(1,obj.NumNodes - 1);
-            for i = 1:obj.NumNodes - 1
-                obj.Um{i} = obj.Problem.variable(obj.NumControls);
-            end
-        end
-        function validateMidNodes(obj,x)
-            if size(x,2) ~= obj.NumNodes - 1
-                msg = "X must have one less column than there are nodes.";
-                error(msg);
-            end
-        end 
     end
     methods (Access = protected)
-        function defect(obj,k)
-            x0 = obj.X{k};
-            xm = obj.Xm{k};
-            xf = obj.X{k + 1};
-            u0 = obj.U{k};
-            um = obj.Um{k};
-            uf = obj.U{k + 1};
-            p0 = obj.Parameters(:,k);
-            pf = obj.Parameters(:,k + 1);
-            f0 = obj.Plant(x0,u0,p0);
-            fm = obj.Plant(xm,um,p0);
-            ff = obj.Plant(xf,uf,pf);
-            [t0,tf] = obj.getTimes(); 
-            h = (obj.Mesh(k + 1) - obj.Mesh(k))*(tf - t0);
-            nx = obj.NumStates;
-            Ch = xm - (1/2).*(xf + x0) - (h./8).*(f0 - ff);
-            Cs = xf - x0 - (h./6).*(ff + 4.*fm + f0);
-            obj.Problem.subject_to(Ch == zeros(nx,1));
-            obj.Problem.subject_to(Cs == zeros(nx,1));
+        function defect(obj)
+            x0 = obj.Plant.States.Variable(:,1:end - 1);
+            xc = obj.MidStates.Variable;
+            xf = obj.Plant.States.Variable(:,2:end);
+            u0 = obj.Plant.Controls.Variable(:,1:end - 1);
+            uc = obj.MidControls.Variable;
+            uf = obj.Plant.Controls.Variable(:,2:end);
+            p0 = obj.Plant.Parameters(:,1:end - 1);
+            pf = obj.Plant.Parameters(:,2:end);
+            f0 = obj.Plant.Dynamics(x0,u0,p0);
+            fc = obj.Plant.Dynamics(xc,uc,p0);
+            ff = obj.Plant.Dynamics(xf,uf,pf);
+            [t0,tf] = obj.getTimes();
+            h = diff(obj.Problem.Mesh(1:2))*(tf - t0);
+            Cc = xc - (1/2).*(x0 + xf) - (h/8).*(f0 - ff);
+            Cf = xf - x0 - (h/6).*(f0 + 4*fc + ff);
+            obj.Problem.Problem.subject_to([Cf;Cc] == 0);
         end
         function x = interpolateState(obj,k)
-            x0 = obj.State(:,k);
-            xm = obj.MidState(:,k);
-            xf = obj.State(:,k + 1);
-            u0 = obj.Control(:,k);
-            um = obj.MidControl(:,k);
-            uf = obj.Control(:,k + 1);
-            p0 = obj.Parameters(:,k);
-            pf = obj.Parameters(:,k + 1);
-            f0 = full(obj.Plant(x0,u0,p0));
-            fm = full(obj.Plant(xm,um,p0));
-            ff = full(obj.Plant(xf,uf,pf));
-            t0 = obj.Time(k);
-            tf = obj.Time(k + 1);
-            h = tf - t0;
-            t = linspace(0,h,obj.ns);
-            x = zeros(obj.NumStates,obj.ns);
-            for i = 1:obj.NumStates
+            x0 = obj.Plant.States.getValues(k);
+            xc = obj.MidStates.Values(:,k);
+            xf = obj.Plant.States.getValues(k + 1);
+            u0 = obj.Plant.Controls.getValues(k);
+            uc = obj.MidControls.Values(:,k);
+            uf = obj.Plant.Controls.getValues(k + 1);
+            p0 = obj.Plant.Parameters(:,k);
+            pf = obj.Plant.Parameters(:,k + 1);
+            f0 = full(obj.Plant.Dynamics(x0,u0,p0));
+            fc = full(obj.Plant.Dynamics(xc,uc,p0));
+            ff = full(obj.Plant.Dynamics(xf,uf,pf)); 
+            h = obj.Time(k + 1) - obj.Time(k);
+            h0 = 0;
+            hc = h/2;
+            t = linspace(h0,h,obj.ns);
+            x = zeros(obj.Plant.NumStates,obj.ns);
+            for i = 1:obj.Plant.NumStates
                 A = [
-                    1,0,0,0;
-                    0,1,0,0;
-                    1,h/2,h^2/4,h^3/8;
-                    0,1,h,(3*h^2)/4;
+                    1,h0,h0^2,h0^3;
+                    0,1,2*h0,3*h0^2;
+                    1,hc,hc^2,hc^3;
+                    0,1,2*hc,3*hc^2;
                     1,h,h^2,h^3;
-                    0,1,2*h,3*h^2
+                    0,1,2*h,3*h^2; 
                 ];
 
                 b = [
                     x0(i);
                     f0(i);
-                    xm(i);
-                    fm(i);
+                    xc(i);
+                    fc(i);
                     xf(i);
-                    ff(i)
+                    ff(i);
                 ];
 
-                c = A\b;
+                a = A\b;
 
-                x(i,:) = c(1) + c(2).*t + c(3).*t.^2 + c(4).*t.^3;
+                x(i,:) = a(1) + a(2)*t + a(3)*t.^2 + a(4)*t.^3;
             end
         end
-        function u = interpolateControl(obj,k)
-            u0 = obj.Control(:,k);
-            um = obj.MidControl(:,k);
-            uf = obj.Control(:,k + 1);
-            t0 = obj.Time(k);
-            tf = obj.Time(k + 1);
-            h = tf - t0;
-            t = linspace(0,h,obj.ns);
-            u = zeros(obj.NumControls,obj.ns);
-            for i = 1:obj.NumControls
+        function u = interpolateControl(obj,k) 
+            u0 = obj.Plant.Controls.getValues(k);
+            uc = obj.MidControls.Values(:,k);
+            uf = obj.Plant.Controls.getValues(k + 1);
+            h = obj.Time(k + 1) - obj.Time(k);
+            h0 = 0;
+            hc = h/2;
+            t = linspace(h0,h,obj.ns);
+            u = zeros(obj.Plant.NumControls,obj.ns);
+            for i = 1:obj.Plant.NumControls
                 A = [
-                    1,0,0;
-                    1,h/2,h^2/4;
-                    1,h,h^2
+                    1,h0,h0^2;
+                    1,hc,hc^2;
+                    1,h,h^2;
                 ];
 
                 b = [
                     u0(i);
-                    um(i);
-                    uf(i)
+                    uc(i);
+                    uf(i);
                 ];
 
-                c = A\b;
+                a = A\b;
 
-                u(i,:) = c(1) + c(2).*t + c(3).*t.^2;
+                u(i,:) = a(1) + a(2)*t + a(3)*t.^2;
             end
+        end
+    end
+    methods (Access = private)
+        function xc = initializeMidStates(obj)
+            x = obj.Plant.States.getValues();
+            x0 = x(:,1:end - 1);
+            x1 = x(:,2:end);
+            values = (x0 + x1)./2;
+            initial = nan(obj.Plant.NumStates,1);
+            final = nan(obj.Plant.NumStates,1);
+            lower = [obj.Plant.States.States.LowerBound].';
+            upper = [obj.Plant.States.States.UpperBound].';
+            f = @CollocationVariableFactory;
+            B = f(obj.Problem.Problem,values,initial,final,lower,upper);
+            xc = struct("Values",values,"Variable",B.create());
+        end
+        function uc = initializeMidControls(obj)
+            u = obj.Plant.Controls.getValues();
+            u0 = u(:,1:end - 1);
+            u1 = u(:,2:end);
+            values = (u0 + u1)./2;
+            initial = nan(obj.Plant.NumControls,1);
+            final = nan(obj.Plant.NumControls,1);
+            lower = [obj.Plant.Controls.States.LowerBound].';
+            upper = [obj.Plant.Controls.States.UpperBound].';
+            f = @CollocationVariableFactory;
+            B = f(obj.Problem.Problem,values,initial,final,lower,upper);
+            uc = struct("Values",values,"Variable",B.create());
         end
     end
 end
