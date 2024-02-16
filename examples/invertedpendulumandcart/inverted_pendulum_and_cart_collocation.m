@@ -12,13 +12,13 @@ x0 = zeros(1,prob.NumNodes);
 t0 = FixedTime('t0',Unit("time",'s'),0);
 tf = FreeTime(prob,'tf',Unit("time",'s'),10,0);
 
-p = State(prob,'x',Unit("position",'m'),x0,1,3,0,10);
+p = State(prob,'x',Unit("position",'m'),x0,1,3);
 theta = State(prob,'\theta',Unit("angle",'rad'),x0,deg2rad(180),0);
 v = State(prob,"v_x",Unit("speed","m/s"),x0,0,0);
 w = State(prob,"\omega_y",Unit("speed","rad/s"),x0,0,0);
 x = StateVector([p,theta,v,w].');
 
-force = State(prob,"force",Unit("force","N"),x0,nan,nan,-40,40);
+force = State(prob,"force",Unit("force","N"),x0,nan,nan,-50,50);
 u = StateVector(force.');
 
 plant = Plant(prob,x,u,params,@invertedPendulumAndCart);

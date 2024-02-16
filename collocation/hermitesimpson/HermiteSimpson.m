@@ -1,5 +1,5 @@
 classdef HermiteSimpson < DirectCollocation
-    properties (Access = private)
+    properties (Access = public)
         MidStates;
         MidControls;
     end
@@ -15,8 +15,8 @@ classdef HermiteSimpson < DirectCollocation
                 solver (1,1) string = "ipopt";
             end
             sol = solve@DirectCollocation(obj,solver);
-            obj.MidStates.Value = sol.value(obj.MidStates.Variable);
-            obj.MidControls.Value = sol.value(obj.MidControls.Variable);
+            obj.MidStates.Values = sol.value(obj.MidStates.Variable);
+            obj.MidControls.Values = sol.value(obj.MidControls.Variable);
         end
     end
     methods (Access = protected)
@@ -34,8 +34,8 @@ classdef HermiteSimpson < DirectCollocation
             ff = obj.Plant.Dynamics(xf,uf,pf);
             [t0,tf] = obj.getTimes();
             h = diff(obj.Problem.Mesh(1:2))*(tf - t0);
-            Cc = xc - (1/2).*(x0 + xf) - (h/8).*(f0 - ff);
-            Cf = xf - x0 - (h/6).*(f0 + 4*fc + ff);
+            Cf = xf - (x0 + (h/6).*(f0 + 4*fc + ff));
+            Cc = xc - ((1/2).*(x0 + xf) + (h/8).*(f0 - ff));
             obj.Problem.Problem.subject_to([Cf;Cc] == 0);
         end
         function x = interpolateState(obj,k)
@@ -76,7 +76,7 @@ classdef HermiteSimpson < DirectCollocation
 
                 a = A\b;
 
-                x(i,:) = a(1) + a(2)*t + a(3)*t.^2 + a(4)*t.^3;
+                x(i,:) = a(1) + a(2).*t + a(3).*t.^2 + a(4).*t.^3;
             end
         end
         function u = interpolateControl(obj,k) 
@@ -103,7 +103,7 @@ classdef HermiteSimpson < DirectCollocation
 
                 a = A\b;
 
-                u(i,:) = a(1) + a(2)*t + a(3)*t.^2;
+                u(i,:) = a(1) + a(2).*t + a(3).*t.^2;
             end
         end
     end

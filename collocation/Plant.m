@@ -5,6 +5,7 @@ classdef Plant < handle
         Controls;
         Parameters;
         Dynamics;
+        ODE;
     end
     properties (GetAccess = public, SetAccess = private)
         NumStates;
@@ -31,7 +32,8 @@ classdef Plant < handle
             obj.Parameters = obj.validateParameters(p);
             obj.setDimensions();
             obj.initializeInputs();
-            obj.Dynamics = obj.setDynamics(f); 
+            obj.Dynamics = obj.setDynamics(f);
+            obj.ODE = obj.setODE(f); 
         end
     end
     methods (Access = private)
@@ -61,6 +63,19 @@ classdef Plant < handle
             inputs = {'x','u','p'};
             outputs = {'xd'};
             Fd = casadi.Function('Fd',vars,{f},inputs,outputs);
+        end
+        function ode = setODE(obj,fd)
+            dae = casadi.DaeBuilder('f');
+            fx = @(x)dae.add_x(char(x.Name));
+            x = arrayfun(fx,obj.States.States,'uniform',0);
+            fu = @(u)dae.add_u(char(u.Name));
+            u = arrayfun(fu,obj.Controls.States,'uniform',0);
+            fp = @(i)dae.add_p(char("p_" + i));
+            p = arrayfun(fp,(1:obj.NumParameters).','uniform',0);
+            xd = fd([x{:}].',[u{:}].',[p{:}].');
+            fxd = @(x,xd)dae.set_ode(char(x.Name),xd);
+            arrayfun(fxd,obj.States.States,xd);
+            ode = dae.create('f',{'x','u','p'},{'ode'});
         end
     end
 end
