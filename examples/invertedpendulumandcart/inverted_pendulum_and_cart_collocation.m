@@ -26,7 +26,7 @@ plant = Plant(prob,x,u,params,@invertedPendulumAndCart);
 gamma = 1;
 objfun = Objective(plant,@(x,u) 0,@(x0,t0,xf,tf)gamma*tf);
  
-prog = HermiteSimpson(prob,objfun,plant,t0,tf);
-prog.solve();
-prog.plotState(2,2);
-prog.plotControl(1,1);
+prog = LegendreGauss(prob,objfun,plant,t0,tf);
+% prog.solve();
+% prog.plotState(2,2);
+% prog.plotControl(1,1);
