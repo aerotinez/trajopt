@@ -1,0 +1,2 @@
+classdef LegendreGauss < DirectCollocation
+end
