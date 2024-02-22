@@ -6,7 +6,7 @@ mc = 0.5;
 mp = 0.2;
 params = [g,l,mc,mp].';
 
-prob = CollocationProblem(100);
+prob = CollocationProblem(20);
 x0 = zeros(1,prob.NumNodes);
 
 t0 = FixedTime('t0',Unit("time",'s'),0);
