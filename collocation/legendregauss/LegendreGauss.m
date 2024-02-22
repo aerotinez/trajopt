@@ -28,7 +28,16 @@ classdef LegendreGauss < DirectCollocation
             obj.EndCoeffs = obj.LagrangeCoeffs*1.^(0:n).';
             obj.QuadCoeffs = obj.LagrangeCoeffs*(1./(1:n + 1)).';
             obj.MidStates = obj.initializeMidStates();
-            obj.defect(); 
+        end
+        function solve(obj,solver)
+            arguments
+                obj (1,1) LegendreGauss;
+                solver (1,1) string = "ipopt";
+            end
+            sol = solve@DirectCollocation(obj,solver);
+            for i = 1:obj.Degree
+                obj.MidStates(i).Values = sol.value(obj.MidStates(i).Variable);
+            end
         end
     end 
     methods (Access = protected)
@@ -53,7 +62,7 @@ classdef LegendreGauss < DirectCollocation
             uk = mat2cell(repmat(u0.',1,d),repelem(nu,N - 1,1),d);
             pk = mat2cell(repmat(p0(:),1,d),repelem(np,N - 1,1),d);
             fk = cellfun(f,xk,uk,pk,"uniform",0);
-            Fk = reshape([fk{:}],d,size(C,1)).';
+            Fk = vertcat(fk{:});
             [t0,tf] = obj.getTimes();
             h = diff(obj.Problem.Mesh(1:2))*(tf - t0);
             obj.Problem.Problem.subject_to(h.*Fk - Z*C == 0);
@@ -81,6 +90,28 @@ classdef LegendreGauss < DirectCollocation
         end
         function Xc = initializeMidStates(obj)
             Xc = arrayfun(@(k)obj.initializeMidState,1:obj.Degree);
+        end
+        function J = cost(obj)
+            J = 0;
+            nx = obj.Plant.NumStates;
+            nu = obj.Plant.NumControls;
+            N = obj.Problem.NumNodes;
+            d = obj.Degree;
+            u0 = obj.Plant.Controls.Variable(:,1:end - 1);
+            fxc = @(r)obj.MidStates(r).Variable(:);
+            xm = arrayfun(fxc,1:d,"uniform",0);
+            xk = mat2cell([xm{:}],repelem(nx,N - 1),d);
+            uk = mat2cell(repmat(u0.',1,d),repelem(nu,N - 1,1),d);
+            L = @(x,u)obj.Objective.Lagrange(x,u).';
+            fk = cellfun(L,xk,uk,"uniform",0);
+            Fk = reshape([fk{:}],d,N - 1);
+            B = repmat(obj.QuadCoeffs(2:end).',1,N - 1);
+            [t0,tf] = obj.getTimes();
+            h = repelem(diff(obj.Problem.Mesh).*(tf - t0),1,d);
+            J = J + (h.*B)*Fk(:);
+            x = obj.Plant.States.Variable;
+            M = obj.Objective.Mayer(x(:,1),t0,x(:,end),tf);
+            J = J + M;
         end 
     end
 end
