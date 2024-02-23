@@ -22,17 +22,16 @@ classdef DirectCollocation < handle
             obj.Plant = plant; 
             obj.InitialTime = t0;
             obj.FinalTime = tf;
-            obj.setTime();
+            obj.setTime(); 
         end
         function varargout = solve(obj,solver)
             arguments
                 obj (1,1) DirectCollocation;
                 solver (1,1) string = "ipopt";
             end
-            obj.defect();
-            J = obj.cost();
-            obj.Problem.Problem.minimize(J);
             obj.Problem.Problem.solver(char(solver));
+            obj.cost();
+            obj.defect();
             sol = obj.Problem.Problem.solve();
             obj.setFromSol(sol); 
             obj.setTime();
@@ -94,20 +93,7 @@ classdef DirectCollocation < handle
             end
         end
     end
-    methods (Access = private)
-        function J = cost(obj)
-            J = 0;
-            x = obj.Plant.States.Variable; 
-            u = obj.Plant.Controls.Variable;
-            L = obj.Objective.Lagrange(x,u).';
-            [t0,tf] = obj.getTimes();
-            q = (tf - t0).*L;
-            dT = diff(obj.Problem.Mesh);
-            b = (1/2).*sum([dT,0;0,dT],1);
-            J = J + b*q;
-            M = obj.Objective.Mayer(x(:,1),t0,x(:,end),tf);
-            J = J + M; 
-        end 
+    methods (Access = private) 
         function setTime(obj)
             t0 = obj.InitialTime.Value;
             tf = obj.FinalTime.Value;
@@ -155,6 +141,7 @@ classdef DirectCollocation < handle
         end
     end
     methods (Access = protected, Abstract)
+        cost(obj);
         defect(obj);
         interpolateState(obj,k);
         interpolateControl(obj,k);

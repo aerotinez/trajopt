@@ -1,5 +1,19 @@
 classdef Trapezoidal < DirectCollocation
     methods (Access = protected)
+        function cost(obj)
+            J = 0;
+            x = obj.Plant.States.Variable; 
+            u = obj.Plant.Controls.Variable;
+            L = obj.Objective.Lagrange(x,u).';
+            [t0,tf] = obj.getTimes();
+            q = (tf - t0).*L;
+            dT = diff(obj.Problem.Mesh);
+            b = (1/2).*sum([dT,0;0,dT],1);
+            J = J + b*q;
+            M = obj.Objective.Mayer(x(:,1),t0,x(:,end),tf);
+            J = J + M;
+            obj.Problem.Problem.minimize(J);
+        end
         function defect(obj)
             x0 = obj.Plant.States.Variable(:,1:end - 1);
             xf = obj.Plant.States.Variable(:,2:end);
