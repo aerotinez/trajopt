@@ -13,7 +13,7 @@ function c = legpol(n)
     if logical(mod(n,2))
         c = fliplr(upsample(a,2,1));
         if iscolumn(c)
-            c = c.';
+            c = fliplr(c.');
         end
         return
     end

@@ -52,6 +52,19 @@ classdef HermiteSimpson < DirectCollocation
             Cc = xc - ((1/2).*(x0 + xf) + (h/8).*(f0 - ff));
             obj.Problem.Problem.subject_to([Cf;Cc] == 0);
         end
+        function setTime(obj)
+            t0 = obj.InitialTime.Value;
+            tf = obj.FinalTime.Value;
+            obj.Time = linspace(t0,tf,obj.Problem.NumNodes);
+        end
+        function t = interpolateTime(obj)
+            t = zeros(1,(obj.Problem.NumNodes - 1)*obj.ns);
+            for k = 1:obj.Problem.NumNodes - 1
+                t0 = obj.Time(k);
+                tf = obj.Time(k + 1);
+                t((k - 1)*obj.ns + 1:k*obj.ns) = linspace(t0,tf,obj.ns);
+            end 
+        end
         function x = interpolateState(obj,k)
             x0 = obj.Plant.States.getValues(k);
             xc = obj.MidStates.Values(:,k);
@@ -118,6 +131,15 @@ classdef HermiteSimpson < DirectCollocation
                 a = A\b;
 
                 u(i,:) = a(1) + a(2).*t + a(3).*t.^2;
+            end
+        end
+        function [t,x,u] = interpolate(obj)
+            t = obj.interpolateTime();
+            x = zeros(obj.Plant.NumStates,numel(t));
+            u = zeros(obj.Plant.NumControls,numel(t));
+            for k = 1:obj.Problem.NumNodes - 1
+                x(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateState(k);
+                u(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateControl(k);
             end
         end
     end

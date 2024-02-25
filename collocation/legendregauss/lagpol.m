@@ -1,8 +1,9 @@
-function C = lagpol(t)
+function L = lagpol(p,t)
     arguments
-        t (1,:) double {mustBeReal};
+        p (1,:);
+        t (1,:);
     end
-    n = numel(t) - 1;
-    A = (t.').^(0:n);
-    C = (A\eye(n + 1)).';
+    n = numel(p) - 1;
+    A = (p.').^(0:n);
+    L = ((A\eye(n + 1)).')*(t.^((0:n).'));
 end

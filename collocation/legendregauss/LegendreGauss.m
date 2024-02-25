@@ -1,159 +1,84 @@
-classdef LegendreGauss < DirectCollocation
-    properties (Access = public)
-        Degree;
-        LegendrePoints;
-        LagrangeCoeffs;
-        CollocationCoeffs;
-        EndCoeffs;
-        QuadCoeffs;
-        MidStates;
-        MidControls;
-    end
-    methods (Access = public)
-        function obj = LegendreGauss(prob,objfun,plant,t0,tf,n)
-            arguments
-                prob (1,1) CollocationProblem;
-                objfun (1,1) Objective;
-                plant (1,1) Plant;
-                t0 (1,1) Time;
-                tf (1,1) Time;
-                n (1,1) double {mustBeInteger,mustBePositive} = 3;
-            end
-            obj = obj@DirectCollocation(prob,objfun,plant,t0,tf);
-            obj.Degree = n;
-            obj.LegendrePoints = [-1,sort(roots(legpol(n))).'];
-            obj.LagrangeCoeffs = lagpol(obj.LegendrePoints);
-            dt = @(t)(0:n).'.*[0;t.^(0:n - 1).'];
-            t = cell2mat(arrayfun(dt,obj.LegendrePoints(2:end),"uniform",0));
-            obj.CollocationCoeffs = obj.LagrangeCoeffs*t;
-            obj.EndCoeffs = obj.LagrangeCoeffs*1.^(0:n).';
-            obj.QuadCoeffs = obj.LagrangeCoeffs*(1./(1:n + 1)).';
-            obj.MidStates = obj.initializeMidStates();
-            obj.MidControls = obj.initializeMidControls();
-        end
-        function solve(obj,solver)
-            arguments
-                obj (1,1) LegendreGauss;
-                solver (1,1) string = "ipopt";
-            end
-            sol = solve@DirectCollocation(obj,solver);
-            for i = 1:obj.Degree
-                obj.MidStates(i).Values = sol.value(obj.MidStates(i).Variable);
-            end
-        end
-    end 
+classdef LegendreGauss < DirectCollocation  
     methods (Access = protected)
         function cost(obj)
             J = 0;
-            nx = obj.Plant.NumStates;
-            nu = obj.Plant.NumControls;
-            N = obj.Problem.NumNodes;
-            d = obj.Degree;
-            u0 = obj.Plant.Controls.Variable(:,1:end - 1);
-            fxc = @(r)obj.MidStates(r).Variable(:);
-            xm = arrayfun(fxc,1:d,"uniform",0);
-            xk = mat2cell([xm{:}],repelem(nx,N - 1),d);
-            uk = mat2cell(repmat(u0.',1,d),repelem(nu,N - 1,1),d);
-            L = @(x,u)obj.Objective.Lagrange(x,u).';
-            fk = cellfun(L,xk,uk,"uniform",0);
-            Fk = vertcat(fk{:});
-            B = repmat(obj.QuadCoeffs(2:end).',1,N - 1);
+            w = obj.quadratureWeights(); 
+            X = obj.Plant.States.Variable(:,1:end - 1);
+            U = obj.Plant.Controls.Variable(:,1:end - 1);
+            XLG = X(:,2:end);
+            ULG = U(:,2:end);
+            L = obj.Objective.Lagrange(XLG,ULG).';
             [t0,tf] = obj.getTimes();
-            h = repelem(diff(obj.Problem.Mesh).*(tf - t0),1,d);
-            J = J + (h.*B)*Fk;
-            x = obj.Plant.States.Variable;
-            M = obj.Objective.Mayer(x(:,1),t0,x(:,end),tf);
+            J = J + ((tf - t0)/2).*(w*L);
+            M = obj.Objective.Mayer(X(:,1),t0,X(:,end),tf);
             J = J + M;
             obj.Problem.Problem.minimize(J);
         end
         function defect(obj)
-            % Get dimensions
-            nx = obj.Plant.NumStates;
-            nu = obj.Plant.NumControls;
-            np = obj.Plant.NumParameters;
-            N = obj.Problem.NumNodes;
-            d = obj.Degree;
-
-            % Get initial and final states
-            x0 = obj.Plant.States.Variable(:,1:end - 1);
-            xf = obj.Plant.States.Variable(:,2:end);
-
-            % Get controls up to N - 1
-            u0 = obj.Plant.Controls.Variable(:,1:end - 1);
-
-            % Get parameters up to N - 1
-            p0 = obj.Plant.Parameters(:,1:end - 1); 
-
-            % Get collocation states
-            fxc = @(r)obj.MidStates(r).Variable(:);
-            xm = arrayfun(fxc,1:d,"uniform",0);
-
-            % Form matrix of collocation states:
-            %   X = [x1,x2 ... xnx]^T
-            %   Z = [X0 | X1 ... Xd] 
-            %   MZ = block_diagonal([Z1,Z2 ... ZN - 1])
-            z = [x0(:),xm{:}];
-            zc = mat2cell(z,repelem(nx,N - 1),d + 1);
-            Z = blkdiag(zc{:});
-
-            % Form block vector of Gauss pseudospectral differentiation matrices
-            %   C = [C1,C2 ... CN - 1]^T
-            C = repmat(obj.CollocationCoeffs,N - 1,1);
-
-            % Get collocation controls
-            fuc = @(r)obj.MidControls(r).Variable(:);
-            um = arrayfun(fuc,1:d,"uniform",0);
-
-            % Form block vector of state derivatives
-            xk = mat2cell([xm{:}],repelem(nx,N - 1),d);
-            uk = mat2cell([u0(:),um{:}],repelem(nu,N - 1),d);
-            pk = mat2cell(repmat(p0(:),1,d),repelem(np,N - 1,1),d);
-            f = @(x,u,p)obj.Plant.Dynamics(x,u,p);
-            fk = cellfun(f,xk,uk,pk,"uniform",0);
-            Fk = vertcat(fk{:});
-
-            % vector of mesh intervals
+            N = obj.Problem.NumNodes - 2;
+            tau = sort(roots(legpol(N))).';
+            D = lagpoldiff([-1,tau],tau);
+            X = obj.Plant.States.Variable(:,1:end - 1);
+            U = obj.Plant.Controls.Variable(:,1:end - 1);
+            P = obj.Plant.Parameters(:,1:end - 1);
+            XLG = X(:,2:end);
+            ULG = U(:,2:end);
+            PLG = P(:,2:end);
+            F = obj.Plant.Dynamics;
             [t0,tf] = obj.getTimes();
-            h = repelem((tf - t0).*diff(obj.Problem.Mesh),1,nx).';
-
-            % Impose collocation constraint on state derivatives within mesh 
-            % intervals
-            obj.Problem.Problem.subject_to(h.*Fk - Z*C == 0);
-
-            % Impose continuity constraint between ends and starts of intervals
-            %   D = L(1)
-            D = repmat(obj.EndCoeffs,N - 1,1);
-            obj.Problem.Problem.subject_to(xf(:) - Z*D == 0);
-
-            % TODO: Differentiate continuity constraints to include start and
-            % end control variables?
+            dt = (tf - t0)./2;
+            obj.Problem.Problem.subject_to(dt.*F(XLG,ULG,PLG) - X*D == 0);
+            w = obj.quadratureWeights().';
+            X0 = X(:,1);
+            Xf = obj.Plant.States.Variable(:,end);
+            obj.Problem.Problem.subject_to(Xf == X0 + dt.*F(XLG,ULG,PLG)*w);
         end
-        function interpolateState(obj)
+        function setTime(obj)
+            t0 = obj.InitialTime.Value;
+            tf = obj.FinalTime.Value;
+            tau = [-1,sort(roots(legpol(obj.Problem.NumNodes - 2))).',1];
+            obj.Time = (tf - t0)/2.*tau + (tf + t0)/2;
         end
-        function interpolateControl(obj)
+        function t = interpolateTime(obj)
+            t0 = obj.Time(1);
+            tf = obj.Time(end);
+            t = linspace(t0,tf,obj.Problem.NumNodes*obj.ns);
+        end
+        function x = interpolateState(obj)
+            N = obj.Problem.NumNodes - 2;
+            tau_k = sort(roots(legpol(N))).';
+            tau = obj.transposeTimeDomain();
+            xi = obj.Plant.States.getValues();
+            L = lagpol([-1,tau_k],tau);
+            x = xi(:,1:end - 1)*L;
+        end
+        function u = interpolateControl(obj)
+            N = obj.Problem.NumNodes - 2;
+            tau_k = sort(roots(legpol(N))).';
+            tau = obj.transposeTimeDomain();
+            ui = obj.Plant.Controls.getValues();
+            L = lagpol([-1,tau_k],tau);
+            u = ui(:,1:end - 1)*L;
+        end
+        function [t,x,u] = interpolate(obj)
+            t = obj.interpolateTime();
+            x = obj.interpolateState();
+            u = obj.interpolateControl();
         end
     end
     methods (Access = private)
-        function xc = initializeMidVariable(obj,var)
-            x = var.getValues();
-            x0 = x(:,1:end - 1);
-            x1 = x(:,2:end);
-            values = (x0 + x1)./2;
-            initial = nan(size(x,1),1);
-            final = nan(size(x,1),1);
-            lower = [var.States.LowerBound].';
-            upper = [var.States.UpperBound].';
-            f = @CollocationVariableFactory;
-            B = f(obj.Problem.Problem,values,initial,final,lower,upper);
-            xc = struct("Values",values,"Variable",B.create());
-        end 
-        function Xc = initializeMidStates(obj)
-            f = @(k)obj.initializeMidVariable(obj.Plant.States);
-            Xc = arrayfun(f,1:obj.Degree);
+        function tau = transposeTimeDomain(obj)
+            t0 = obj.Time(1);
+            tf = obj.Time(end);
+            dt = tf - t0;
+            t = obj.interpolateTime();
+            tau = (2.*t - dt)./dt;
         end
-        function Uc = initializeMidControls(obj)
-            f = @(k)obj.initializeMidVariable(obj.Plant.Controls);
-            Uc = arrayfun(f,1:(obj.Degree - 1));
+        function w = quadratureWeights(obj)
+            N = obj.Problem.NumNodes - 2;
+            tau = sort(roots(legpol(N))).';
+            dPN = (fliplr(0:N).*legpol(N))*[tau.^(fliplr(0:N-1).');zeros(1,N)];
+            w = 2./((1 - tau.^2).*dPN.^2);
         end
     end
 end

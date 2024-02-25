@@ -38,16 +38,7 @@ classdef DirectCollocation < handle
             if nargout > 0
                 varargout{1} = sol;
             end
-        end
-        function [t,x,u] = interpolate(obj)
-            t = obj.interpolateTime();
-            x = zeros(obj.Plant.NumStates,numel(t));
-            u = zeros(obj.Plant.NumControls,numel(t));
-            for k = 1:obj.Problem.NumNodes - 1
-                x(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateState(k);
-                u(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateControl(k);
-            end
-        end
+        end 
         function fig = plotState(obj,rows,cols)
             fig = figure();
             tiledlayout(rows,cols,"Parent",fig);
@@ -93,12 +84,7 @@ classdef DirectCollocation < handle
             end
         end
     end
-    methods (Access = private) 
-        function setTime(obj)
-            t0 = obj.InitialTime.Value;
-            tf = obj.FinalTime.Value;
-            obj.Time = linspace(t0,tf,obj.Problem.NumNodes);
-        end
+    methods (Access = private)  
         function setStates(obj,sol)
             x = sol.value(obj.Plant.States.Variable);
             obj.Plant.States.set(x);
@@ -130,20 +116,15 @@ classdef DirectCollocation < handle
         function [t0,tf] = getTimes(obj)
             t0 = obj.InitialTime.get();
             tf = obj.FinalTime.get();
-        end
-        function t = interpolateTime(obj)
-            t = zeros(1,(obj.Problem.NumNodes - 1)*obj.ns);
-            for k = 1:obj.Problem.NumNodes - 1
-                t0 = obj.Time(k);
-                tf = obj.Time(k + 1);
-                t((k - 1)*obj.ns + 1:k*obj.ns) = linspace(t0,tf,obj.ns);
-            end 
-        end
+        end 
     end
     methods (Access = protected, Abstract)
         cost(obj);
         defect(obj);
-        interpolateState(obj,k);
-        interpolateControl(obj,k);
+        setTime(obj);
+        interpolateTime(obj);
+        interpolateState(obj);
+        interpolateControl(obj);
+        interpolate(obj);
     end
 end

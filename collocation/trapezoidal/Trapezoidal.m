@@ -27,6 +27,19 @@ classdef Trapezoidal < DirectCollocation
             h = diff(obj.Problem.Mesh(1:2))*(tf - t0); 
             obj.Problem.Problem.subject_to(xf - (x0 + (h/2).*(f0 + ff)) == 0);
         end
+        function setTime(obj)
+            t0 = obj.InitialTime.Value;
+            tf = obj.FinalTime.Value;
+            obj.Time = linspace(t0,tf,obj.Problem.NumNodes);
+        end
+        function t = interpolateTime(obj)
+            t = zeros(1,(obj.Problem.NumNodes - 1)*obj.ns);
+            for k = 1:obj.Problem.NumNodes - 1
+                t0 = obj.Time(k);
+                tf = obj.Time(k + 1);
+                t((k - 1)*obj.ns + 1:k*obj.ns) = linspace(t0,tf,obj.ns);
+            end 
+        end
         function x = interpolateState(obj,k)
             x0 = obj.Plant.States.getValues(k);
             xf = obj.Plant.States.getValues(k + 1);
@@ -82,6 +95,15 @@ classdef Trapezoidal < DirectCollocation
                 a = A\b;
 
                 u(i,:) = a(1) + a(2)*t;
+            end
+        end
+        function [t,x,u] = interpolate(obj)
+            t = obj.interpolateTime();
+            x = zeros(obj.Plant.NumStates,numel(t));
+            u = zeros(obj.Plant.NumControls,numel(t));
+            for k = 1:obj.Problem.NumNodes - 1
+                x(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateState(k);
+                u(:,(k - 1)*obj.ns + 1:k*obj.ns) = obj.interpolateControl(k);
             end
         end
     end
