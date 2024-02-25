@@ -49,16 +49,16 @@ classdef LegendreGauss < DirectCollocation
             tau_k = sort(roots(legpol(N))).';
             tau = obj.transposeTimeDomain();
             xi = obj.Plant.States.getValues();
-            L = lagpol([-1,tau_k],tau);
-            x = xi(:,1:end - 1)*L;
+            L = lagpol([-1,tau_k,1],tau);
+            x = xi*L;
         end
         function u = interpolateControl(obj)
             N = obj.Problem.NumNodes - 2;
             tau_k = sort(roots(legpol(N))).';
             tau = obj.transposeTimeDomain();
             ui = obj.Plant.Controls.getValues();
-            L = lagpol([-1,tau_k],tau);
-            u = ui(:,1:end - 1)*L;
+            L = lagpol([-1,tau_k,1],tau);
+            u = ui*L;
         end
         function [t,x,u] = interpolate(obj)
             t = obj.interpolateTime();
