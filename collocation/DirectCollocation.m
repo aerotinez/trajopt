@@ -45,6 +45,7 @@ classdef DirectCollocation < handle
             t0 = obj.InitialTime.Value;
             tf = obj.FinalTime.Value;
             [t,x,~] = obj.interpolate();
+            [tr,xr] = obj.simulatePlant();
             xn = obj.Plant.States.getValues(); 
             names = obj.Plant.States.getNames(); 
             units = obj.Plant.States.getUnits(); 
@@ -53,6 +54,7 @@ classdef DirectCollocation < handle
                 hold("on");
                 plot(t,x(i,:),"k");
                 scatter(obj.Time,xn(i,:),20,'k',"filled");
+                plot(tr,xr(i,:),"r");
                 hold("off");
                 box(gca,"on");
                 xlim([t0,tf]);
@@ -126,5 +128,6 @@ classdef DirectCollocation < handle
         interpolateState(obj);
         interpolateControl(obj);
         interpolate(obj);
+        simulatePlant(obj);
     end
 end

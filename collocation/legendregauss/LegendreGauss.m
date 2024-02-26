@@ -44,34 +44,45 @@ classdef LegendreGauss < DirectCollocation
             tf = obj.Time(end);
             t = linspace(t0,tf,obj.Problem.NumNodes*obj.ns);
         end
-        function x = interpolateState(obj)
+        function x = interpolateState(obj,t)
             N = obj.Problem.NumNodes - 2;
             tau_k = sort(roots(legpol(N))).';
-            tau = obj.transposeTimeDomain();
+            tau = obj.transposeTimeDomain(t);
             xi = obj.Plant.States.getValues();
             L = lagpol([-1,tau_k,1],tau);
             x = xi*L;
         end
-        function u = interpolateControl(obj)
+        function u = interpolateControl(obj,t)
             N = obj.Problem.NumNodes - 2;
             tau_k = sort(roots(legpol(N))).';
-            tau = obj.transposeTimeDomain();
+            tau = obj.transposeTimeDomain(t);
             ui = obj.Plant.Controls.getValues();
             L = lagpol([-1,tau_k,1],tau);
             u = ui*L;
         end
         function [t,x,u] = interpolate(obj)
             t = obj.interpolateTime();
-            x = obj.interpolateState();
-            u = obj.interpolateControl();
+            x = obj.interpolateState(t);
+            u = obj.interpolateControl(t);
+        end
+        function [t,x] = simulatePlant(obj)
+            X = obj.Plant.States.getValues();
+            x0 = X(:,1);
+            p = obj.Plant.Parameters(:,1);
+            fu = @obj.interpolateControl;
+            f = @(t,y)full(obj.Plant.Dynamics(y,fu(t),p));
+            tspan = [obj.Time(1),obj.Time(end)];
+            options = odeset("MaxStep",obj.Time(end)/10);
+            [t,x] = ode45(f,tspan,x0,options);
+            t = t.';
+            x = x.';
         end
     end
     methods (Access = private)
-        function tau = transposeTimeDomain(obj)
+        function tau = transposeTimeDomain(obj,t)
             t0 = obj.Time(1);
             tf = obj.Time(end);
             dt = tf - t0;
-            t = obj.interpolateTime();
             tau = (2.*t - dt)./dt;
         end
         function w = quadratureWeights(obj)
