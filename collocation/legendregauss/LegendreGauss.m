@@ -72,8 +72,7 @@ classdef LegendreGauss < DirectCollocation
             fu = @obj.interpolateControl;
             f = @(t,y)full(obj.Plant.Dynamics(y,fu(t),p));
             tspan = [obj.Time(1),obj.Time(end)];
-            options = odeset("MaxStep",obj.Time(end)/10);
-            [t,x] = ode45(f,tspan,x0,options);
+            [t,x] = ode45(f,tspan,x0);
             t = t.';
             x = x.';
         end

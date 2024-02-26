@@ -2,17 +2,18 @@ close("all"); clear; clc;
 
 v = 130/3.6;
 k = 0;
+p = bikeSimToSharp(cruiserParameters());
 params = [
     v;
     k;
-    sharpMotorcycle1971Parameters().list()
+    p.list()
     ];
 
 prob = CollocationProblem(13);
 x0 = zeros(1,prob.NumNodes);
 
 t0 = FixedTime("s0",Unit("progress",'m'),0);
-tf = FreeTime(prob,"s0",Unit("progress",'m'),200,0);
+tf = FreeTime(prob,"s0",Unit("progress",'m'),300,0);
 
 d = State(prob,'offset',Unit("distance",'m'),x0,-3,0,-3.5,3.5);
 rel_head = State(prob,'relative heading',Unit("angle",'rad'),x0,0,0);
@@ -24,7 +25,7 @@ lean_rate = State(prob,'lean rate',Unit("angular speed",'rad/s'),x0,0,0);
 steer_rate = State(prob,'steer rate',Unit("angular speed",'rad/s'),x0,0,0);
 Yr = State(prob,'Rear tire lateral force',Unit("force",'N'),x0);
 Yf = State(prob,'Front tire lateral force',Unit("force",'N'),x0);
-Msteer = State(prob,'Steering torque',Unit("torque",'Nm'),x0);
+Msteer = State(prob,'Steering torque',Unit("torque",'Nm'),x0,nan,nan,-200,200);
 
 X = [
     d;
@@ -42,7 +43,7 @@ X = [
 
 x = StateVector(X);
 
-Jsteer = State(prob,'Steering torque rate',Unit("torque rate",'Nm/s'),x0,nan,nan,-75,75);
+Jsteer = State(prob,'Steering torque rate',Unit("torque rate",'Nm/s'),x0,nan,nan,-10,10);
 u = StateVector(Jsteer);
 
 plant = Plant(prob,x,u,params,@sharpMotorcycleRoadRelative);
