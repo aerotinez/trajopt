@@ -123,7 +123,9 @@ classdef DirectCollocation < handle
     methods (Access = protected, Abstract)
         cost(obj);
         defect(obj);
-        setTime(obj);
+        setTime(obj); 
+    end
+    methods (Access = public, Abstract)
         interpolateTime(obj);
         interpolateState(obj);
         interpolateControl(obj);

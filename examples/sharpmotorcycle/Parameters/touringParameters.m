@@ -52,7 +52,7 @@ set(SH,'CoMHeight',125E-03);
 set(SH,'ForkLength',700E-03);
 set(SH,'Rake',86E-03);
 set(SH,'Caster',29);
-set(SH,'Damping',0.15);
+set(SH,'Damping',0.2122);
 
 F = Fork;
 set(F,'Mass',7.25);

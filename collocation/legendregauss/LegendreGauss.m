@@ -39,6 +39,8 @@ classdef LegendreGauss < DirectCollocation
             tau = [-1,sort(roots(legpol(obj.Problem.NumNodes - 2))).',1];
             obj.Time = (tf - t0)/2.*tau + (tf + t0)/2;
         end
+    end
+    methods (Access = public)
         function t = interpolateTime(obj)
             t0 = obj.Time(1);
             tf = obj.Time(end);

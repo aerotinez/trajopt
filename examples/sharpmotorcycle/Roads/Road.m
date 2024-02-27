@@ -18,8 +18,8 @@ function Show(obj)
     lm = [laneMarking('Solid')
         laneMarking('Dashed','Length',2,'Space',4)
         laneMarking('Solid')];
-    l = lanespec(2,'Marking',lm);
-    road(scen,obj.Data.',7,'Lanes',l);
+    l = lanespec(2,'Marking',lm,"width",3.5);
+    road(scen,obj.Data.',0.*obj.Data(1,:).',"Lanes",l);
     plot(scen);
     axe = gca;
     axe.SortMethod = 'childorder';

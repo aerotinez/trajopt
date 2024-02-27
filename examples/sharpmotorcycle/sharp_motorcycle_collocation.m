@@ -2,7 +2,7 @@ close("all"); clear; clc;
 
 v = 130/3.6;
 k = 0;
-p = bikeSimToSharp(cruiserParameters());
+p = bikeSimToSharp(bigSportsParameters());
 params = [
     v;
     k;
@@ -13,6 +13,7 @@ prob = CollocationProblem(13);
 x0 = zeros(1,prob.NumNodes);
 
 t0 = FixedTime("s0",Unit("progress",'m'),0);
+% tf = FixedTime("s0",Unit("progress",'m'),150);
 tf = FreeTime(prob,"s0",Unit("progress",'m'),300,0);
 
 d = State(prob,'offset',Unit("distance",'m'),x0,-3,0,-3.5,3.5);
@@ -43,13 +44,13 @@ X = [
 
 x = StateVector(X);
 
-Jsteer = State(prob,'Steering torque rate',Unit("torque rate",'Nm/s'),x0,nan,nan,-10,10);
+Jsteer = State(prob,'Steering torque rate',Unit("torque rate",'Nm/s'),x0,nan,nan,-30,30);
 u = StateVector(Jsteer);
 
 plant = Plant(prob,x,u,params,@sharpMotorcycleRoadRelative);
 
-gamma = 0;
-J = @(x,u)(1./((v.*cos(x(2,:)) + x(5,:).*sin(x(2,:)))./(k.*x(1,:) - 1))).^2;
+gamma = 1;
+J = @(x,u)0;
 objfun = Objective(plant,J,@(x0,t0,xf,tf)gamma*tf);
 
 prog = LegendreGauss(prob,objfun,plant,t0,tf);
