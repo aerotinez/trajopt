@@ -7,6 +7,6 @@ params = [
     touringParameters();
 ];
 
-f = @(p)straightExperiment(20,p);
+f = @(p)straightExperiment(10,p);
 results = arrayfun(f,params);
 save(path + "straight_results.mat","results");

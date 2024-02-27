@@ -1,23 +1,28 @@
-function results = straightExperiment(N,parameters)
+function results = arcExperiment(scenario,degree,parameters)
     arguments
-        N (1,1) double {mustBeInteger, mustBeReal, mustBePositive};
+        scenario (1,1) Road;
+        degree (1,1) double {mustBeInteger, mustBeReal, mustBePositive};
         parameters (1,1) BikeSimMotorcycleParameters;
     end
-    v = 130/3.6;
-    curvature = 0;
-    p = [
-        v;
-        curvature;
-        bikeSimToSharp(parameters).list()
-    ];
 
-    prob = CollocationProblem(N);
+    prob = CollocationProblem(degree);
     x0 = zeros(1,prob.NumNodes);
 
-    t0 = FixedTime("s0",Unit("progress",'m'),0);
-    tf = FixedTime("sf",Unit("progress",'m'),200);
+    tau = 0.5.*[-1,sort(roots(legpol(prob.NumNodes - 2))).',1] + 0.5;
+    s = scenario.Parameter./scenario.Parameter(end);
+    curvature = interp1(s,scenario.Curvature,tau);
 
-    d = State(prob,'Offset',Unit("distance",'m'),x0,-3,3,-3.5,3.5);
+    v = 80/3.6;
+    p = [
+        repmat(v,[1,prob.NumNodes]);
+        curvature;
+        repmat(bikeSimToSharp(parameters).list(),[1,prob.NumNodes])
+    ];
+
+    t0 = FixedTime("s0",Unit("progress",'m'),0);
+    tf = FixedTime("sf",Unit("progress",'m'),scenario.Parameter(end));
+
+    d = State(prob,'Offset',Unit("distance",'m'),x0,0,0,-3.5,3.5);
     rel_head = State(prob,'Relative heading',Unit("angle",'rad'),x0,0,0,-deg2rad(90),deg2rad(90));
     lean = State(prob,'Lean',Unit("angle",'rad'),x0,0,0,-deg2rad(60),deg2rad(60));
     steer = State(prob,'Steer',Unit("angle",'rad'),x0,0,0);
@@ -61,7 +66,7 @@ function results = straightExperiment(N,parameters)
     x = prog.Plant.States.getValues();
     CollocationPoints = result(prog,s,x,v);
     s = prog.interpolateTime();
-    Trajectory = result(prog,s,prog.interpolateState(s),v); 
+    Trajectory = result(prog,s,prog.interpolateState(s),v);
 
     results = struct( ...
         "Collocation",CollocationPoints, ...

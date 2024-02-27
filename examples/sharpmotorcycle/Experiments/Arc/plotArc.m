@@ -1,11 +1,10 @@
 close("all"); clear; clc;
-load("straight_results.mat");
+load("arc_results.mat");
 fig_path = "C:\Users\marti\PhD\Articles\LCSS24\Figures\";
 
 fig = figure();
 tiledlayout(fig,2,3);
 arrayfun(@nexttile,1:prod(fig.Children.GridSize));
-set(fig,"Position",[100,360,640,480]);
 
 state_names = [
     "Offset";
@@ -28,32 +27,31 @@ leg.Layout.Tile = 'south';
 leg.FontSize = 12;
 
 set(fig,"Position",[100,360,640,480]);
-saveas(fig,fig_path + "results_straight",'epsc');
+saveas(fig,fig_path + "results_arc",'epsc');
 
-rd = Road();
+rd = arcScenario();
 road_length = results(3).Collocation.Progress(end);
-rd.AddStraightSegment(road_length);
 rd.Show();
 fig_road = gcf;
-arrayfun(@(r,c)plotRoad(fig_road,r,c),results,colors.');
 axe_road = gca;
-view(-90,10);
-xlim([0,road_length]);
-ylim([-7,7]);
-zlim([0,3.5]);
+arrayfun(@(r,c)plotRoad(fig_road,rd,r,c),results,colors.');
+view(axe_road,-90,30);
+xlim(axe_road,[0,rd.Data(1,end) + 7]);
+ylim(axe_road,[-7,rd.Data(2,end)]);
+zlim(axe_road,[0,3]);
 box(axe_road,"on");
 camproj(axe_road,"perspective");
-title(axe_road,"Straight road scenario");
-daspect(axe_road,[5,1,1]);
+title(axe_road,"Arc scenario");
+daspect(axe_road,[1,1,0.3]);
 leg_road_names = {'','','','','','big sports','','','cruiser','','','touring'};
 leg_road = legend(leg_road_names{:}, ...
     "NumColumns",3, ...
     "Location","SouthOutside", ...
     "Box","on");
 leg_road.FontSize = 12;
-set(fig_road,"Position",[960,360,640,570]);
+set(fig_road,"Position",[960,360,640,480]);
 
-saveas(fig_road,fig_path + "road_straight",'epsc');
+saveas(fig_road,fig_path + "road_arc",'epsc');
 
 function fig = plotResult(fig,result,state_names,color)
     n = prod(fig.Children.GridSize);
@@ -64,7 +62,7 @@ function fig = plotResult(fig,result,state_names,color)
         hold(axe,"on");
         t_collocation = result.Collocation.Time;
         x_collocation = result.Collocation.States(idx(i),:);
-        scatter(t_collocation,x_collocation,30,color,"filled","Parent",axe);
+        scatter(t_collocation,x_collocation,20,color,"filled","Parent",axe);
         t_trajectory = result.Trajectory.Time;
         x_trajectory = result.Trajectory.States(idx(i),:);
         plot(t_trajectory,x_trajectory,color,"Parent",axe); 
@@ -77,15 +75,19 @@ function fig = plotResult(fig,result,state_names,color)
     end
 end
 
-function fig = plotRoad(fig,result,color)
-    hold(fig.Children,"on");
+function fig = plotRoad(fig,road,result,color)
     r = result.Trajectory;
-    x0 = r.Progress;
-    y0 = r.States(1,:);
-    z0 = 0.*x0;
-    p0 = [x0;y0;z0];
-    plot3(x0,y0,z0,color);
-    yaw = r.States(2,:);
+    n2c = @(x)num2cell(x,1);
+    s = r.Progress;
+    yaw_road = interp1(road.Parameter,road.Heading,s);
+    offset = r.States(1,:);
+    f = @(i)interp1(road.Parameter,road.Data(i,:),s);
+    pr = cell2mat(arrayfun(f,(1:3).',"uniform",0));
+    hold(fig.Children,"on");
+    f = @(p,a,d)rotz(a)*[0;d;0] + p;
+    p0 =  cell2mat(cellfun(f,n2c(pr),n2c(yaw_road),n2c(offset),"uniform",0));
+    plot3(p0(1,:),p0(2,:),p0(3,:),color);
+    yaw = r.States(2,:) + yaw_road;
     lean = -r.States(3,:);
     pitch = 0.*yaw;
     angles = deg2rad([yaw;lean;pitch]);
