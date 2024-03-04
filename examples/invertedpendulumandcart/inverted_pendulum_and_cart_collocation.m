@@ -24,7 +24,7 @@ u = StateVector(force.');
 plant = Plant(prob,x,u,params,@invertedPendulumAndCart);
 
 gamma = 1;
-objfun = Objective(plant,@(x,u) 0,@(x0,t0,xf,tf)gamma*tf);
+objfun = Objective(plant,@(x,u)0,@(x0,t0,xf,tf)gamma*tf);
  
 prog = LegendreGauss(prob,objfun,plant,t0,tf);
 prog.solve();
