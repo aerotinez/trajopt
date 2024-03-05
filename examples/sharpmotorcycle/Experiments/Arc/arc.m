@@ -9,6 +9,6 @@ params = [
     touringParameters();
 ];
 
-f = @(p)arcExperiment(scenario,20,p);
+f = @(p)arcExperiment(scenario,10,p);
 results = arrayfun(f,params);
 save(path + "arc_results.mat","results");

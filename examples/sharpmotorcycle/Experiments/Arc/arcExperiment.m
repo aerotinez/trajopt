@@ -16,7 +16,6 @@ function results = arcExperiment(scenario,degree,parameters)
     p = [
         repmat(v,[1,prob.NumNodes]);
         curvature;
-        repmat(bikeSimToSharp(parameters).list(),[1,prob.NumNodes])
     ];
 
     t0 = FixedTime("s0",Unit("progress",'m'),0);
@@ -54,9 +53,12 @@ function results = arcExperiment(scenario,degree,parameters)
     Jsteer = State(prob,'Steer torque rate',Jsteer_units,x0,nan,nan,-100,100);
     u = StateVector(Jsteer);
 
-    plant = Plant(prob,x,u,p,@sharpMotorcycleRoadRelative);
+    params = bikeSimToSharp(parameters).list();
+    A = sharpMotorcycleRoadRelativeFactory(params);
+    f = @(x,u,p)A(x,u,p)*x;
+    plant = Plant(prob,x,u,p,f);
 
-    J = @(x,u)(1/1E04).*[x(9,:),x(10,:)]*[x(9,:),x(10,:)].' + (1/2).*u*u.';
+    J = @(x,u)(1/2).*u*u.';
     objfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
 
     prog = LegendreGauss(prob,objfun,plant,t0,tf);

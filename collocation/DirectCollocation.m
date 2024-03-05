@@ -35,10 +35,6 @@ classdef DirectCollocation < handle
             sol = obj.Problem.Problem.solve();
             obj.setFromSol(sol); 
             obj.setTime();
-            semilogy(sol.stats.iterations.inf_du)
-            hold on;
-            semilogy(sol.stats.iterations.inf_pr)
-            hold off;
             if nargout > 0
                 varargout{1} = sol;
             end
