@@ -13,7 +13,7 @@ classdef FrenetSerret
         Torsion;
     end
     properties (Access = private)
-        Norm = @(x)simplify(sqrt(sum(x.^2)),'Steps',100);
+        Norm = @(x)simplify(sqrt(x.'*x),'Steps',100);
     end
     methods (Access = public)
         function obj = FrenetSerret(expression,parameter)
@@ -48,7 +48,7 @@ classdef FrenetSerret
         function curvature = ComputeCurvature(obj)
             f1 = obj.FirstDerivative;
             f2 = obj.SecondDerivative;
-            k = obj.Norm(cross(f1,f2))./obj.Norm(f1).^3;
+            k = obj.Norm(cross(f1,f2))./(obj.Norm(f1).^3);
             curvature = simplify(k,'Steps',100);
         end
         function torsion = ComputeTorsion(obj)

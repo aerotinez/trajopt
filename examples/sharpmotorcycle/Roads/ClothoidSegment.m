@@ -41,13 +41,13 @@ function obj = ClothoidSegment(Length,start_radius,end_radius,Direction)
             
     obj.Curvature = curvature(parameter_vector); 
     obj.ComputeHeading(rotation_matrix,parameter_vector);
-    obj.Heading = rad2deg(wrapToPi(deg2rad(obj.Heading)));
+    obj.Heading = -(fliplr(obj.Heading) + max(abs(obj.Heading)));
 
     if end_radius > start_radius
         obj.Data = rotz(obj.Heading(end))*([-1;1;1].*obj.Data);
         obj.Data = fliplr(obj.Data - obj.Data(:,end));
-        obj.Curvature = fliplr(obj.Curvature);
-        % obj.Heading = fliplr(180 - obj.Heading);
+        obj.Curvature = -fliplr(obj.Curvature);
+        obj.Heading = (fliplr(-obj.Heading) - max(abs(obj.Heading)));
     end
     obj.SetDirection(); 
 end

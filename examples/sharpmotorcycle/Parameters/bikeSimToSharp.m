@@ -3,7 +3,7 @@ arguments
     bikesim_params (1,1) BikeSimMotorcycleParameters;
 end
 bs = bikesim_params;
-s = SharpModel1971StraightRunParameters;
+s = SharpMotorcycleParameters;
 
 %% geometric parameters
 s.rf = bs.FrontTire.EffectiveRollingRadius;
