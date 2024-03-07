@@ -28,7 +28,7 @@ input.setMax("Steering torque rate",100);
 
 v = 80/3.6;
 scen = arcScenario();
-f = @(p)SharpMotorcycleExperiment(15,v,scen,state,input,p).run();
+f = @(p)SharpMotorcycleExperiment(22,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
 save(path + "arc_results.mat","results");

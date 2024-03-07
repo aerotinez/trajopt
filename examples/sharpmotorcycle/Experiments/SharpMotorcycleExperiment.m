@@ -93,8 +93,8 @@ classdef SharpMotorcycleExperiment < handle
         end
         function costfun = setCost(~,plant)
             Jvy = @(x,u)1E03.*x(5,:).^2;
-            JY = @(x,u)0.*(1/1E05).*(x(9,:) + x(10,:)).^2;
-            Ju = @(x,u)(1/100).*u.^2;
+            JY = @(x,u)(1/1E05).*(x(9,:) + x(10,:)).^2;
+            Ju = @(x,u)(1/0.1E03).*u.^2;
             J = @(x,u)Jvy(x,u) + JY(x,u) + Ju(x,u);
             costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
         end
