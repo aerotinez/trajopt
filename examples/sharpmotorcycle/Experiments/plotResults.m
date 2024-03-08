@@ -5,7 +5,6 @@ function fig = plotResults(results)
     fig = figure();
     tiledlayout(fig,2,3);
     arrayfun(@nexttile,1:prod(fig.Children.GridSize));
-    set(fig,"Position",[100,360,640,480]);
 
     state_names = [
         "Offset";
@@ -27,7 +26,7 @@ function fig = plotResults(results)
     leg.Layout.Tile = 'south';
     leg.FontSize = 12;
 
-    set(fig,"Position",[100,360,640,480]);
+    set(fig,"Position",[50,100,640,480]);
 end
 
 function fig = helper(fig,result,state_names,color)

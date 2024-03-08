@@ -14,7 +14,7 @@ function fig = plotScenario(scen,results)
     y = [scen.Data(2,1),scen.Data(2,end)];
     ylim(axe,[min(y) - 7,max(y) + 7]);
     zlim(axe,[0,3]);
-    set(fig,"Position",[960,360,640,480]);
+    set(fig,"Position",[720,100,640,480]);
     
     names = {
         '';

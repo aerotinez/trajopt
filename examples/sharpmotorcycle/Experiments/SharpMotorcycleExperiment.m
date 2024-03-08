@@ -25,7 +25,7 @@ classdef SharpMotorcycleExperiment < handle
             U = obj.toStateVector(inputs);
             curvature = obj.setCurvature();
             plant = obj.setPlant(X,U,curvature,params);
-            costfun = obj.setCost(plant);
+            costfun = obj.setCost(plant,params);
             obj.Program = LegendreGauss(obj.Problem,costfun,plant,s0,sf);
         end
         function result = run(obj)
@@ -91,11 +91,21 @@ classdef SharpMotorcycleExperiment < handle
 
             plant = Plant(obj.Problem,x,u,curvature,f);
         end
-        function costfun = setCost(~,plant)
-            Jvy = @(x,u)1E03.*x(5,:).^2;
-            JY = @(x,u)(1/1E05).*(x(9,:) + x(10,:)).^2;
-            Ju = @(x,u)(1/0.1E03).*u.^2;
-            J = @(x,u)Jvy(x,u) + JY(x,u) + Ju(x,u);
+        function costfun = setCost(obj,plant,params)
+            p = bikeSimToSharp(params).list();
+            a = p(12);
+            an = p(13);
+            b = p(14);
+            caster = p(end);
+            l = (a - an)./cos(caster);
+            vx = obj.Speed;
+            ar = @(x)(1/vx).*(b.*x(6,:) - x(5,:));
+            af = @(x)-(1/vx).*(x(5,:) + l.*x(6,:) - an.*x(8,:)) + x(4,:).*cos(caster);
+            Ja = @(x,u)sum(1E06.*(ar(x) - af(x)).^2);
+            % Jvy = @(x,u)0*sum(1E03.*x(5,:).^2);
+            JY = @(x,u)0.4*sum(((x(9,:) + x(10,:))./1E03).^2);
+            Ju = @(x,u)0.2*sum((u(1,:)./10).^2);
+            J = @(x,u)Ja(x,u) + JY(x,u) + Ju(x,u);
             costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
         end
         function result = getResult(obj,s,x)

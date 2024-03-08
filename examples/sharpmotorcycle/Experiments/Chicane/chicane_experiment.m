@@ -28,7 +28,7 @@ input.setMax("Steering torque rate",100);
 
 v = 110/3.6;
 scen = chicaneScenario();
-f = @(p)SharpMotorcycleExperiment(17,v,scen,state,input,p).run();
+f = @(p)SharpMotorcycleExperiment(23,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
 save(path + "chicane_results.mat","results");

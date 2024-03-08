@@ -46,7 +46,7 @@ function obj = ClothoidSegment(Length,start_radius,end_radius,Direction)
     if end_radius > start_radius
         obj.Data = rotz(obj.Heading(end))*([-1;1;1].*obj.Data);
         obj.Data = fliplr(obj.Data - obj.Data(:,end));
-        obj.Curvature = -fliplr(obj.Curvature);
+        obj.Curvature = fliplr(obj.Curvature);
         obj.Heading = (fliplr(-obj.Heading) - max(abs(obj.Heading)));
     end
     obj.SetDirection(); 
