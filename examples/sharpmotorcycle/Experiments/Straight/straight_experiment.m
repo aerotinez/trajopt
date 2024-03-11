@@ -9,7 +9,7 @@ params = [
 
 state = SharpMotorcycleState();
 state.setInitial("Offset",-3);
-state.setFinal("Offset",3);
+state.setFinal("Offset",-0.5);
 state.setMin("Offset",-3.5);
 state.setMax("Offset",3.5);
 
@@ -28,7 +28,7 @@ input.setMax("Steering torque rate",100);
 
 v = 130/3.6;
 scen = straightScenario();
-f = @(p)SharpMotorcycleExperiment(24,v,scen,state,input,p).run();
+f = @(p)SharpMotorcycleExperiment(29,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
 save(path + "straight_results.mat","results");

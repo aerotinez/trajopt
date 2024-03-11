@@ -1,4 +1,4 @@
 function road = straightScenario()
 road = Road();
-road.AddStraightSegment(150);
+road.AddStraightSegment(115);
 end

@@ -3,7 +3,7 @@ function fig = plotResults(results)
         results (:,1) struct
     end
     fig = figure();
-    tiledlayout(fig,2,3);
+    tiledlayout(fig,2,4);
     arrayfun(@nexttile,1:prod(fig.Children.GridSize));
 
     state_names = [
@@ -12,6 +12,8 @@ function fig = plotResults(results)
         "Lean";
         "Lateral velocity";
         "Lean rate";
+        "Rear tire lateral force";
+        "Front tire lateral force";
         "Steering torque";
         ];
 
