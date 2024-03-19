@@ -11,6 +11,7 @@ x0 = zeros(1,prob.NumNodes);
 
 t0 = FixedTime('t0',Unit("time",'s'),0);
 tf = FreeTime(prob,'tf',Unit("time",'s'),10,0);
+% tf = FixedTime('tf',Unit("time",'s'),3);
 
 p = State(prob,'x',Unit("position",'m'),x0,1,3);
 theta = State(prob,'\theta',Unit("angle",'rad'),x0,deg2rad(180),0);
