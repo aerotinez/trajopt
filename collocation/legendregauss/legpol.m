@@ -2,7 +2,7 @@ function c = legpol(n)
     arguments
         n (1,1) double {mustBeInteger,mustBeNonnegative}
     end
-    bc = @nchoosek;
+    bc = @(n,k)factorial(n)./(factorial(n - k).*factorial(k));
     f = @(n,k)(1/(2^n))*((-1)^k)*bc(n,k)*bc(2*(n - k),n);
     g = @(n)arrayfun(@(k)f(n,k),0:floor(n/2));
     a = fliplr(g(n));
