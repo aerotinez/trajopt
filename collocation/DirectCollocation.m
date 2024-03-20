@@ -52,16 +52,22 @@ classdef DirectCollocation < handle
             for i = 1:size(x,1)
                 nexttile();
                 hold("on");
-                plot(t,x(i,:),"k");
-                scatter(obj.Time,xn(i,:),20,'k',"filled");
-                plot(tr,xr(i,:),"r");
+                col_points = scatter(obj.Time,xn(i,:),20,'k', ...
+                    "LineWidth",1.5, ...
+                    "MarkerFaceColor",'w');
+                plot(t,x(i,:),":k","LineWidth",1.5);
+                plot(tr,xr(i,:),"LineWidth",1.5,"Color","#0072BD");
                 hold("off");
+                uistack(col_points,"top");
                 box(gca,"on");
                 xlim([t0,tf]);
                 title(names(i));
                 xlabel(obj.InitialTime.Unit.toString());
                 ylabel(units(i));
             end
+            leg = legend("Interpolation","Simulation","Collocation Points");
+            leg.Orientation = 'horizontal';
+            leg.Layout.Tile = 'South';
         end
         function fig = plotControl(obj,rows,cols)
             fig = figure();

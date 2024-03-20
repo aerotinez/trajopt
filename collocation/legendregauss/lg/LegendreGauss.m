@@ -1,8 +1,7 @@
 classdef LegendreGauss < LG 
     methods (Access = protected) 
         function tau = collocationPoints(obj)
-            N = obj.Problem.NumNodes - 2;
-            tau = sort(roots(legpol(N))).';
+            [~,tau] = quadLegendreGauss(obj.Problem.NumNodes - 2);
         end 
         function cost(obj)
             J = 0;

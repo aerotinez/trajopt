@@ -6,14 +6,15 @@ classdef SharpMotorcycleExperiment < handle
         Program;
     end 
     methods (Access = public)
-        function obj = SharpMotorcycleExperiment(N,v,scen,states,inputs,params)
+        function obj = SharpMotorcycleExperiment(f,N,v,scen,x,u,p)
             arguments
+                f (1,1) function_handle;
                 N (1,1) double {mustBePositive,mustBeInteger};
                 v (1,1) double {mustBePositive};
                 scen (1,1) Road;
-                states (1,1) SharpMotorcycleState;
-                inputs (1,1) SharpMotorcycleInput;
-                params (1,1) BikeSimMotorcycleParameters;
+                x (1,1) SharpMotorcycleState;
+                u (1,1) SharpMotorcycleInput;
+                p (1,1) BikeSimMotorcycleParameters;
             end
             obj.Problem = CollocationProblem(N);
             obj.Scenario = scen;
@@ -21,12 +22,12 @@ classdef SharpMotorcycleExperiment < handle
             s_units = Unit("arclength",'m');
             s0 = FixedTime("s0",s_units,0);
             sf = FixedTime("sf",s_units,scen.Parameter(end));
-            X = obj.toStateVector(states);
-            U = obj.toStateVector(inputs);
+            X = obj.toStateVector(x);
+            U = obj.toStateVector(u);
             curvature = obj.setCurvature();
-            plant = obj.setPlant(X,U,curvature,params);
-            costfun = obj.setCost(plant,params);
-            obj.Program = LegendreGauss(obj.Problem,costfun,plant,s0,sf);
+            plant = obj.setPlant(X,U,curvature,p);
+            costfun = obj.setCost(plant,p);
+            obj.Program = f(obj.Problem,costfun,plant,s0,sf);
         end
         function result = run(obj)
             obj.Program.solve();

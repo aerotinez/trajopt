@@ -6,7 +6,7 @@ mc = 0.5;
 mp = 0.2;
 params = [g,l,mc,mp].';
 
-prob = CollocationProblem(28);
+prob = CollocationProblem(18);
 x0 = zeros(1,prob.NumNodes);
 
 t0 = FixedTime('t0',Unit("time",'s'),0);
@@ -27,7 +27,7 @@ plant = Plant(prob,x,u,params,@invertedPendulumAndCart);
 gamma = 1;
 objfun = Objective(plant,@(x,u)0,@(x0,t0,xf,tf)gamma*tf);
  
-prog = LegendreGauss(prob,objfun,plant,t0,tf);
+prog = LegendreGaussLobatto(prob,objfun,plant,t0,tf);
 prog.solve();
 prog.plotState(2,2);
 prog.plotControl(1,1);

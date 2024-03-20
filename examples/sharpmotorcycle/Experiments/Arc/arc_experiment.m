@@ -26,9 +26,10 @@ input = SharpMotorcycleInput();
 input.setMin("Steering torque rate",-100);
 input.setMax("Steering torque rate",100);
 
-v = 80/3.6;
+v = 50/3.6;
 scen = arcScenario();
-f = @(p)SharpMotorcycleExperiment(21,v,scen,state,input,p).run();
+g = @LegendreGaussRadau;
+f = @(p)SharpMotorcycleExperiment(g,27,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
 save(path + "arc_results.mat","results");

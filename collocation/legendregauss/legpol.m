@@ -1,6 +1,6 @@
 function c = legpol(n)
     arguments
-        n (1,1) double {mustBeInteger, mustBeNonnegative}
+        n (1,1) double {mustBeInteger,mustBeNonnegative}
     end
     bc = @nchoosek;
     f = @(n,k)(1/(2^n))*((-1)^k)*bc(n,k)*bc(2*(n - k),n);
