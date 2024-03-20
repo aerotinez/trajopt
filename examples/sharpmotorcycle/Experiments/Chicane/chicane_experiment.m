@@ -8,10 +8,10 @@ params = [
 ];
 
 state = SharpMotorcycleState();
-state.setInitial("Offset",0);
-state.setFinal("Offset",0);
+state.setInitial("Offset",-1.75);
+state.setFinal("Offset",-1.75);
 state.setMin("Offset",-3.5);
-state.setMax("Offset",3.5);
+state.setMax("Offset",0);
 
 state.setMin("Relative heading",-deg2rad(90));
 state.setMax("Relative heading",deg2rad(90));
@@ -26,10 +26,10 @@ input = SharpMotorcycleInput();
 input.setMin("Steering torque rate",-100);
 input.setMax("Steering torque rate",100);
 
-v = 110/3.6;
+v = 80/3.6;
 scen = chicaneScenario();
 g = @LegendreGaussRadau;
-f = @(p)SharpMotorcycleExperiment(g,25,v,scen,state,input,p).run();
+f = @(p)SharpMotorcycleExperiment(g,38,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
 save(path + "chicane_results.mat","results");

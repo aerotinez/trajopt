@@ -49,7 +49,7 @@ function fig = helper(fig,result,state_names,color)
         hold(axe,"off");
         box(axe,"on");
         title(axe,result.Collocation.Names(idx(i)));
-        xlabel(axe,"time (s)");
+        xlabel(axe,"arclength (m)");
         ylabel(axe,result.Collocation.Units(idx(i)),'Interpreter','tex');
         xlim(axe,[0,s_trajectory(end)]);
     end
