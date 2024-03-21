@@ -24,9 +24,9 @@ function fig = plotResults(results)
         "Location","SouthOutside", ...
         "Box","on");
     leg.Layout.Tile = 'south';
-    leg.FontSize = 12;
+    leg.FontSize = 18;
 
-    set(fig,"Position",[50,100,640,640]);
+    set(fig,"Position",[50,100,640,720]);
 end
 
 function fig = helper(fig,result,state_names,color)
@@ -35,6 +35,7 @@ function fig = helper(fig,result,state_names,color)
     idx = nonzeros(contains(result.Collocation.Names,state_names).*(1:nx).');
     for i = 1:n
         axe = fig.Children.Children(n - i + 1);
+        axe.FontSize = 18;
         hold(axe,"on");
         s_collocation = result.Collocation.Progress;
         % t_collocation = result.Collocation.Time;
@@ -47,9 +48,10 @@ function fig = helper(fig,result,state_names,color)
         hold(axe,"off");
         box(axe,"on");
         title(axe,result.Collocation.Names(idx(i)));
-        axe.TitleFontSizeMultiplier = 2;
-        xlabel(axe,"arclength (m)");
-        ylabel(axe,result.Collocation.Units(idx(i)),'Interpreter','tex');
+        axe.TitleFontSizeMultiplier = 1;
+        xlabel(axe,"arclength (m)","FontSize",18);
+        ylabel(axe,result.Collocation.Units(idx(i)), ...
+            'Interpreter','tex','FontSize',18);
         xlim(axe,[0,s_trajectory(end)]);
     end
 end

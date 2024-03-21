@@ -104,8 +104,8 @@ classdef SharpMotorcycleExperiment < handle
             af = @(x)-(1/vx).*(x(5,:) + l.*x(6,:) - an.*x(8,:)) + x(4,:).*cos(caster);
             Ja = @(x,u)sum(1E06.*(ar(x) - af(x)).^2);
             % Jvy = @(x,u)0*sum(1E03.*x(5,:).^2);
-            JY = @(x,u)0.4*sum(((x(9,:) + x(10,:))./1E03).^2);
-            Ju = @(x,u)0.2*sum((u(1,:)./10).^2);
+            JY = @(x,u)sum(((x(9,:) + x(10,:))./1E03).^2);
+            Ju = @(x,u)sum((u(1,:)./10).^2);
             J = @(x,u)Ja(x,u) + JY(x,u) + Ju(x,u);
             costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
         end

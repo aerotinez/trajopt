@@ -7,6 +7,7 @@ function fig = plotScenario(scen,results)
     fig = gcf;
     arrayfun(@(r,c)helper(fig,scen,r,c),results,'krb'.');
     axe = gca;
+    axe.FontSize = 14;
     view(axe,-90,1.5); 
     box(axe,"on");
     camproj(axe,"perspective");
@@ -60,6 +61,6 @@ function fig = helper(fig,scen,result,color)
     X = [p0(1,:);p(1,:)];
     Y = [p0(2,:);p(2,:)];
     Z = [p0(3,:);p(3,:)];
-    surf(X,Y,Z,"FaceColor",color,"EdgeColor","none","FaceAlpha",0.25);
+    surf(X,Y,Z,"FaceColor",color,"EdgeColor","none","FaceAlpha",0.15);
     hold(fig.Children,"off");
 end
