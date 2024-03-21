@@ -1,6 +1,6 @@
 close("all"); clear; clc;
 load("straight_results.mat");
-fig_path = "C:\Users\marti\PhD\Articles\LCSS24\Figures\";
+fig_path = "C:\Users\marti\PhD\Articles\CDC24\Figures\";
 fig_results = plotResults(results);
 saveas(fig_results,fig_path + "results_straight",'epsc');
 
