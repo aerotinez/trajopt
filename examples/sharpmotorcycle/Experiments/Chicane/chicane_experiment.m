@@ -8,8 +8,8 @@ params = [
 ];
 
 state = SharpMotorcycleState();
-state.setInitial("Offset",-1.75);
-state.setFinal("Offset",-1.75);
+state.setInitial("Offset",nan);
+state.setFinal("Offset",nan);
 state.setMin("Offset",-3.5);
 state.setMax("Offset",0);
 
@@ -23,6 +23,8 @@ state.setMin("Steering torque",-200);
 state.setMax("Steering torque",200);
 
 input = SharpMotorcycleInput();
+input.setInitial("Steering torque rate",nan);
+input.setFinal("Steering torque rate",nan);
 input.setMin("Steering torque rate",-100);
 input.setMax("Steering torque rate",100);
 

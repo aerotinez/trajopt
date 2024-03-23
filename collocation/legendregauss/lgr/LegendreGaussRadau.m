@@ -8,9 +8,11 @@ classdef LegendreGaussRadau < LG
             w = quadRadau(obj.Problem.NumNodes - 1); 
             X = obj.Plant.States.Variable;
             U = obj.Plant.Controls.Variable;
+            P = obj.Plant.Parameters;
             XLG = X(:,1:end - 1);
             ULG = U(:,1:end - 1);
-            L = obj.Objective.Lagrange(XLG,ULG).';
+            PLG = P(:,1:end - 1);
+            L = obj.Objective.Lagrange(XLG,ULG,PLG).';
             [t0,tf] = obj.getTimes();
             J = J + ((tf - t0)/2).*(w*L);
             M = obj.Objective.Mayer(X(:,1),t0,X(:,end),tf);

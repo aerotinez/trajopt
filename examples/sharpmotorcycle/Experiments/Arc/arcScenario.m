@@ -1,7 +1,8 @@
 function road = arcScenario()
-road = Road();
-road.AddStraightSegment(50);
-radius = 50;
-road.AddArcSegment(deg2rad(90)*radius,radius,"Left");
-road.AddStraightSegment(50);
+    road = Road();
+    straight_length = 50;
+    road.addStraight(straight_length);
+    radius = 50;
+    road.addArc(deg2rad(90)*radius,radius,"left");
+    road.addStraight(straight_length);
 end

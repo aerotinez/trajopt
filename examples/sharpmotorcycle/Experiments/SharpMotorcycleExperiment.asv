@@ -93,34 +93,28 @@ classdef SharpMotorcycleExperiment < handle
             plant = Plant(obj.Problem,x,u,curvature,f);
         end
         function costfun = setCost(obj,plant,params)
-            Jt = obj.minimumTimeCost();
-            JY = obj.lateralForceCost(params);
+            JY = obj.lateralForceCost();
             Ja = obj.slipCost(params);
             Ju = obj.controlCost();
-            J = @(x,u,p)JY(x,u,p) + Ja(x,u) + 0.*Ju(x,u,p);
+            J = @(x,u,p)0.*JY(x,u) + 0.*Ja(x,u) + Ju(x,u,p);
             costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
         end
         function Jt = minimumTimeCost(obj)
             frr = @roadRelativeKinematics;
             v = obj.Speed;
             fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
-            Jt = @(x,p)sum(1./([1,0,0]*fr(x,p)));
+            Jt = @(x,p)1./([1,0,0]*fr(x,p));
         end
-        function JY = lateralForceCost(obj,params)
+        function JY = lateralForceCost(~)
             p = bikeSimToSharp(params);
             sys = sharpMotorcycleStateSpaceFactory(obj.Speed,p);
             A = sys.a;
             B = sys.b;
             fsharp = @(x)A*x(3:end - 1,:) + B*x(end,:);
-            frr = @roadRelativeKinematics;
-            v = obj.Speed;
-            fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
-            ds = @(x,p)1./([1,0,0]*fr(x,p));
             f7 = @(x)x(7);
             f8 = @(x)x(8);
-            JYr = @(x,u,p)f7(fsharp(x))./ds(x,p);
-            JYf = @(x,u,p)f8(fsharp(x))./ds(x,p);
-            JY = @(x,u,p)sum(1E-09.*(JYr(x,u,p).^2 + JYf(x,u,p).^2));
+
+            JY = @(x,u)f7(fsharp(x))
             % JY = @(x,u)sum(((x(9,:) + x(10,:))./1E02).^2);
         end
         function Ja = slipCost(obj,params)
@@ -144,7 +138,7 @@ classdef SharpMotorcycleExperiment < handle
             v = obj.Speed;
             fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
             ds = @(x,p)[1,0,0]*fr(x,p);
-            Ju = @(x,u,p)sum((1E01.*u(1,:)./ds(x,p)).^2);
+            Ju = @(x,u,p)sum((1E-01.*u(1,:)./ds(x,p)).^2);
         end
         function result = getResult(obj,s,x)
             % compute time from progress rate

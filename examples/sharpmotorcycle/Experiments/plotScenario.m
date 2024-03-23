@@ -3,7 +3,7 @@ function fig = plotScenario(scen,results)
         scen (1,1) Road;
         results (:,1) struct;
     end
-    scen.Show();
+    plot(scen);
     fig = gcf;
     arrayfun(@(r,c)helper(fig,scen,r,c),results,'krb'.');
     axe = gca;
@@ -52,7 +52,7 @@ function fig = helper(fig,scen,result,color)
     p0 =  cell2mat(cellfun(f,n2c(pr),n2c(yaw_road),n2c(offset),"uniform",0));
     plot3(p0(1,:),p0(2,:),p0(3,:),color,"LineWidth",2);
     yaw = r.States(2,:) + yaw_road;
-    lean = -r.States(3,:);
+    lean = r.States(3,:);
     pitch = 0.*yaw;
     angles = deg2rad([yaw;lean;pitch]);
     f = @(p,a)p + angle2dcm(a(1),a(2),a(3),'ZXY')*[0;0;3];

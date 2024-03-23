@@ -1,26 +1,55 @@
-classdef ArcSegment < RoadSegment
-properties (GetAccess = public, SetAccess = protected)
-    Radius;
-    Angle;
-end
-methods (Access = public)
-function obj = ArcSegment(Length,Radius,Direction)
-    obj.Parameter = linspace(0,Length,Length + 1);
-    obj.Direction = Direction;
-    circ = @(t)Radius.*[cos(t);sin(t);0.*t];
-    obj.Radius = Radius;
-    ang = Length/Radius;
-    obj.Angle = rad2deg(ang);
-    parameter_vector = linspace(pi/2 - ang,pi/2,numel(obj.Parameter));
-    obj.Data = fliplr(circ(parameter_vector) - [0;Radius;0]);
-    obj.Length = Length;
-    FS = FrenetSerret(circ(sym('t')),sym('t'));
-    rotation_matrix = matlabFunction(FS.RotationMatrix);
-    obj.ComputeHeading(rotation_matrix,linspace(0,ang,numel(obj.Parameter)));
-    obj.Heading = -obj.Heading + 90;
-    curvature = matlabFunction(FS.Curvature);
-    obj.Curvature = curvature().*ones(1,numel(obj.Parameter));
-    obj.SetDirection();
-end
-end 
+classdef ArcSegment < CurveSegment
+    properties (GetAccess = public, SetAccess = protected)
+        Radius;
+        Angle;
+    end
+    methods (Access = public)
+        function obj = ArcSegment(arclength,radius,dir)
+            arguments
+                arclength (1,1) double {mustBeNumeric}
+                radius (1,1) double {mustBeNumeric}
+                dir (1,1) string {mustBeMember(dir,["left","right"])}
+            end
+            obj@CurveSegment(arclength);
+            obj.Radius = radius;
+            obj.Length = arclength;
+            obj.Angle = arclength/radius;
+            obj.setFormula();
+            obj.initData();
+            obj.recenter();
+            obj.toNED();
+            obj.setFrenetSerretFormulae();  
+            obj.setHeading();
+            obj.setCurvature();
+            obj.setDirection(dir);
+        end
+    end
+    methods (Access = private)
+        function s = arcLength(obj)
+            s = linspace(0,obj.Angle,obj.Length + 1);
+        end 
+        function recenter(obj)
+            tform = rigidtform3d(eye(3),obj.Data(:,1));
+            obj.Data = transformPointsInverse(tform,obj.Data.').';
+        end
+        function toNED(obj)
+            tform = rigidtform3d(rotz(90),zeros(3,1));
+            obj.Data = transformPointsInverse(tform,obj.Data.').';
+        end 
+    end
+    methods (Access = protected)
+        function initData(obj)
+            obj.Data = obj.Formula(obj.arcLength());
+        end
+        function setFormula(obj)
+            obj.Formula = @(s)obj.Radius.*[cos(s);sin(s);0.*s];
+        end
+        function setHeading(obj)
+            setHeading@CurveSegment(obj,obj.arcLength());
+            obj.Heading = obj.Heading - 90;
+        end
+        function setCurvature(obj)
+            setCurvature@CurveSegment(obj,obj.arcLength());
+        end
+    end
 end

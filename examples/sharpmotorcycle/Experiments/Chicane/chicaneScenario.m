@@ -5,8 +5,8 @@ clothoid_length = 100;
 arc_length = 150;
 radius = arc_length/ang;
 road = Road();
-road.AddStraightSegment(straight_length);
-road.AddClothoidSegment(clothoid_length,inf,radius,"Left");
-road.AddClothoidSegment(clothoid_length,radius,inf,"Right");
-road.AddStraightSegment(straight_length);
+road.addStraight(straight_length);
+road.addClothoid(clothoid_length,inf,radius,"left");
+road.addClothoid(clothoid_length,radius,inf,"right");
+road.addStraight(straight_length);
 end
