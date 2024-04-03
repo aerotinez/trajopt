@@ -93,21 +93,58 @@ classdef SharpMotorcycleExperiment < handle
             plant = Plant(obj.Problem,x,u,curvature,f);
         end
         function costfun = setCost(obj,plant,params)
+            Jt = obj.minimumTimeCost();
+            JY = obj.lateralForceCost(params);
+            Ja = obj.slipCost(params);
+            Ju = obj.controlCost();
+            J = @(x,u,p)JY(x,u,p) + Ja(x,u) + 0.*Ju(x,u,p);
+            costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
+        end
+        function Jt = minimumTimeCost(obj)
+            frr = @roadRelativeKinematics;
+            v = obj.Speed;
+            fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
+            Jt = @(x,p)sum(1./([1,0,0]*fr(x,p)));
+        end
+        function JY = lateralForceCost(obj,params)
+            p = bikeSimToSharp(params);
+            sys = sharpMotorcycleStateSpaceFactory(obj.Speed,p);
+            A = sys.a;
+            B = sys.b;
+            fsharp = @(x)A*x(3:end - 1,:) + B*x(end,:);
+            frr = @roadRelativeKinematics;
+            v = obj.Speed;
+            fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
+            ds = @(x,p)1./([1,0,0]*fr(x,p));
+            f7 = @(x)x(7);
+            f8 = @(x)x(8);
+            JYr = @(x,u,p)f7(fsharp(x))./ds(x,p);
+            JYf = @(x,u,p)f8(fsharp(x))./ds(x,p);
+            JY = @(x,u,p)sum(1E-09.*(JYr(x,u,p).^2 + JYf(x,u,p).^2));
+            % JY = @(x,u)sum(((x(9,:) + x(10,:))./1E02).^2);
+        end
+        function Ja = slipCost(obj,params)
             p = bikeSimToSharp(params).list();
             a = p(12);
             an = p(13);
             b = p(14);
             caster = p(end);
-            l = (a - an)./cos(caster);
+            c = cos(caster);
+            l = (a - an)./c;
             vx = obj.Speed;
             ar = @(x)(1/vx).*(b.*x(6,:) - x(5,:));
-            af = @(x)-(1/vx).*(x(5,:) + l.*x(6,:) - an.*x(8,:)) + x(4,:).*cos(caster);
-            Ja = @(x,u)sum(1E06.*(ar(x) - af(x)).^2);
-            % Jvy = @(x,u)0*sum(1E03.*x(5,:).^2);
-            JY = @(x,u)sum(((x(9,:) + x(10,:))./1E03).^2);
-            Ju = @(x,u)sum((u(1,:)./10).^2);
-            J = @(x,u)Ja(x,u) + JY(x,u) + Ju(x,u);
-            costfun = Objective(plant,J,@(x0,t0,xf,tf)0.*tf);
+            af = @(x)-(1/vx).*(x(5,:) + l.*x(6,:) - an.*x(8,:)) + x(4,:).*c;
+            Ja = @(x,u)sum(1E05.*(ar(x) - af(x)).^2);
+        end
+        function Jlean = leanCost(~) 
+            Jlean = @(x,u)x(7);
+        end
+        function Ju = controlCost(obj)
+            frr = @roadRelativeKinematics;
+            v = obj.Speed;
+            fr = @(x,p)frr([0.*x(1,:);x(1:2,:)],[v + 0.*x(1,:);x(5:6,:)],p); 
+            ds = @(x,p)[1,0,0]*fr(x,p);
+            Ju = @(x,u,p)sum((1E01.*u(1,:)./ds(x,p)).^2);
         end
         function result = getResult(obj,s,x)
             % compute time from progress rate

@@ -8,8 +8,8 @@ params = [
 ];
 
 state = SharpMotorcycleState();
-state.setInitial("Offset",-3);
-state.setFinal("Offset",-0.5);
+state.setInitial("Offset",-1.75);
+state.setFinal("Offset",1.75);
 state.setMin("Offset",-3.5);
 state.setMax("Offset",3.5);
 

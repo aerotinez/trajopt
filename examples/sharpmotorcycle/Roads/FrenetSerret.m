@@ -17,7 +17,11 @@ classdef FrenetSerret
     end
     methods (Access = public)
         function obj = FrenetSerret(expression,parameter)
-            obj.Expression = expression;
+            arguments
+                expression (1,1) function_handle;
+                parameter (1,1) sym = sym('t');
+            end
+            obj.Expression = expression(parameter);
             obj.Parameter = parameter;
             obj.FirstDerivative = diff(obj.Expression,obj.Parameter,1);
             obj.SecondDerivative = diff(obj.Expression,obj.Parameter,2);

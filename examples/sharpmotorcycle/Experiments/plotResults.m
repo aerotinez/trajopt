@@ -3,7 +3,7 @@ function fig = plotResults(results)
         results (:,1) struct
     end
     fig = figure();
-    tiledlayout(fig,3,2);
+    tiledlayout(fig,4,2);
     arrayfun(@nexttile,1:prod(fig.Children.GridSize));
 
     state_names = [
@@ -12,6 +12,8 @@ function fig = plotResults(results)
         "Lean";
         "Lateral velocity";
         "Lean rate";
+        "Rear tire lateral force";
+        "Front tire lateral force";
         "Steering torque";
         ];
 
@@ -26,7 +28,7 @@ function fig = plotResults(results)
     leg.Layout.Tile = 'south';
     leg.FontSize = 18;
 
-    set(fig,"Position",[50,100,640,720]);
+    set(fig,"Position",[50,100,640,850]);
 end
 
 function fig = helper(fig,result,state_names,color)
