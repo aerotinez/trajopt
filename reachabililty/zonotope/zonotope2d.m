@@ -1,0 +1,20 @@
+classdef zonotope2d < zonotope
+    methods (Access = public)
+        function obj = zonotope2d(genertors,center)
+            arguments
+                genertors (2,:) double;
+                center (2,1) double = zeros(2,1);
+            end
+            obj@zonotope(genertors,center);
+        end
+        function plot(obj)
+            axe = gca;
+            P = obj.generate();
+            k = convhull(P(1,:),P(2,:));
+            hold(axe,"on");
+            plot(polyshape(P(1,k).',P(2,k).'),"FaceColor",'r',"FaceAlpha",0.3);
+            scatter(axe,P(1,:),P(2,:),"filled",'k');
+            hold(axe,"off");
+        end 
+    end
+end
