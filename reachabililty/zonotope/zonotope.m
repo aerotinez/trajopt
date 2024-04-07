@@ -17,20 +17,23 @@ classdef zonotope
             obj.Dimension = size(center,1);
             obj.Order = size(genertors,2)/obj.Dimension;
         end
-        function zn = plus(obj,z)
+        function zn = plus(za,zb)
             arguments
-                obj zonotope;
-                z zonotope {validatePlusDimensions(obj,z)};
+                za zonotope;
+                zb zonotope;
             end
-            c = obj.Center + zb.Center;
-            g = [obj.Generators,z.Generators];
-            zn = zonotope(g,c);
+            za.validatePlusDimensions(zb);
+            c = za.Center + zb.Center;
+            g = [za.Generators,zb.Generators];
+            f = str2func(class(za));
+            zn = f(g,c);
         end
-        function zn = mtimes(obj,A)
+        function zn = mtimes(A,obj)
             arguments
+                A double;
                 obj zonotope;
-                A double {validateMtimesDimensions(obj,A)};
-            end 
+            end
+            obj.validateMtimesDimensions(A);
             c = A*obj.Center;
             g = A*obj.Generators;
             zn = zonotope(g,c);
@@ -38,7 +41,7 @@ classdef zonotope
         function Z = generate(obj)
             f = @(x)[zeros(obj.Dimension,1),x];
             G = cellfun(f,num2cell(obj.Generators,1),'UniformOutput',false);
-            Z = obj.Center +  minkowskiSum(G{:});
+            Z = obj.Center + minkowskiSum(G{:});
         end 
     end
     methods (Access = protected)

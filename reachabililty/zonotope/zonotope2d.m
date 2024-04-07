@@ -11,9 +11,10 @@ classdef zonotope2d < zonotope
             axe = gca;
             P = obj.generate();
             k = convhull(P(1,:),P(2,:));
+            H = P(:,k).';
             hold(axe,"on");
-            plot(polyshape(P(1,k).',P(2,k).'),"FaceColor",'r',"FaceAlpha",0.3);
-            scatter(axe,P(1,:),P(2,:),"filled",'k');
+            fill(H(:,1),H(:,2),'r',"FaceAlpha",0.3);
+            % scatter(axe,P(1,:),P(2,:),"filled",'k');
             hold(axe,"off");
         end 
     end
