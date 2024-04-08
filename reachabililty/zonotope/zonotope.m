@@ -6,16 +6,16 @@ classdef zonotope
         Order;
     end
     methods (Access = public)
-        function obj = zonotope(genertors,center)
+        function obj = zonotope(generators,center)
             arguments
-                genertors double;
-                center (:,1) double = zeros(size(genertors,1),1);
+                generators double;
+                center (:,1) double = zeros(size(generators,1),1);
             end 
             obj.Center = center;
-            obj.Generators = genertors;
+            obj.Generators = generators;
             obj.validateDimensions();
             obj.Dimension = size(center,1);
-            obj.Order = size(genertors,2)/obj.Dimension;
+            obj.Order = size(generators,2)/obj.Dimension;
         end
         function zn = plus(za,zb)
             arguments
@@ -28,18 +28,20 @@ classdef zonotope
             f = str2func(class(za));
             zn = f(g,c);
         end
-        function zn = mtimes(A,obj)
+        function zn = mtimes(A,z)
             arguments
                 A double;
-                obj zonotope;
+                z zonotope;
             end
-            obj.validateMtimesDimensions(A);
-            c = A*obj.Center;
-            g = A*obj.Generators;
-            zn = zonotope(g,c);
+            z.validateMtimesDimensions(A);
+            c = A*z.Center;
+            g = A*z.Generators;
+            f = str2func(class(z));
+            zn = f(g,c);
         end
         function Z = generate(obj)
-            Z = obj.Center + obj.minkowskiSum();
+            M = obj.minkowskiSum();
+            Z = obj.Center + (M - mean(M,2));
         end 
     end
     methods (Access = protected)

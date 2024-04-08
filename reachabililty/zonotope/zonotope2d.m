@@ -13,7 +13,9 @@ classdef zonotope2d < zonotope
             k = convhull(P(1,:),P(2,:));
             H = P(:,k).';
             hold(axe,"on");
-            fill(H(:,1),H(:,2),'r',"FaceAlpha",0.3);
+            fill(H(:,1),H(:,2),[0,0.4470,0.7410], ...
+                "FaceAlpha",0, ...
+                "EdgeColor","b");
             % scatter(axe,P(1,:),P(2,:),"filled",'k');
             hold(axe,"off");
         end 

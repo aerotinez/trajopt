@@ -1,12 +1,10 @@
-function M = minkowskiSum(varargin)
+function M = minkowskiSum(varargin) 
+    if size(varargin{1},1) ~= size(varargin{2},1)
+        error('A and B must have the same number of rows');
+    end
     A = varargin{1};
     B = varargin{2};
-    if size(A,1) ~= size(B,1)
-        error('A and B must have the same number of rows');
-    end 
-    Ma = repelem(A,1,size(B,2));
-    Mb = repmat(B,1,size(A,2));
-    M = Ma + Mb;
+    M = repelem(A,1,size(B,2)) + repmat(B,1,size(A,2));
     if nargin < 3
         return;
     end
