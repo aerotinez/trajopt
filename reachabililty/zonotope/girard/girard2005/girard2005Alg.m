@@ -1,4 +1,4 @@
-function R = reachableSetGirard2005(X0,A,b,t,m)
+function R = girard2005Alg(X0,A,b,t,m)
     arguments
         X0 (1,1) zonotope;
         A double {mustBeReal};
