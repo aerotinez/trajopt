@@ -40,8 +40,8 @@ classdef zonotope
             zn = f(g,c);
         end
         function Z = generate(obj)
-            M = obj.minkowskiSum();
-            Z = obj.Center + (M - mean(M,2));
+            M = cellfun(@(g)[-g,g],num2cell(obj.Generators,1),"uniform",0);
+            Z = minkowskiSum(obj.Center,M{:});
         end 
     end
     methods (Access = protected)
@@ -60,13 +60,6 @@ classdef zonotope
             if size(A,2) ~= size(obj.Center,1)
                 error(msg);
             end
-        end
-        function M = minkowskiSum(obj)
-            M = [zeros(obj.Dimension,1),obj.Generators(:,1)];
-            for i = 2:size(obj.Generators,2)
-                B = [zeros(obj.Dimension,1),obj.Generators(:,i)]; 
-                M = repelem(M,1,size(B,2)) + repmat(B,1,size(M,2));
-            end
-        end
+        end 
     end
 end

@@ -10,7 +10,7 @@ function R = reachableSetGirard2005(X0,A,b,t,m)
     f = str2func(class(X0));
     fhc = @(r)f(r.*eye(size(A,1)));
     An = norm(A,inf);
-    ar = (exp(ts*An) - 1 - ts*An)*max(vecnorm(X0.generate(),inf,2));
+    ar = (exp(ts*An) - 1 - ts*An)*max(vecnorm(X0.generate(),inf,1));
     br = (exp(ts*An) - 1)*b/An;
     a = expm(ts.*A);
 
