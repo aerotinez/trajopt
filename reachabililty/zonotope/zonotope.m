@@ -41,7 +41,16 @@ classdef zonotope
         end
         function Z = generate(obj)
             M = cellfun(@(g)[-g,g],num2cell(obj.Generators,1),"uniform",0);
-            Z = minkowskiSum(obj.Center,M{:});
+            if size(obj.Generators,2) <= obj.Dimension + 1
+                Z = minkowskiSum(obj.Center,M{:});
+                return;
+            end
+            Z = minkowskiSum(obj.Center,M{1:obj.Dimension});
+            Z = unique(Z(:,convhulln(Z.')).',"rows","stable").';
+            for i = obj.Dimension + 1:size(obj.Generators,2)
+                Z = minkowskiSum(Z,M{i});
+                Z = unique(Z(:,convhulln(Z.')).',"rows","stable").';
+            end
         end 
     end
     methods (Access = protected)

@@ -42,7 +42,7 @@ function zout = reduceOrder(zin,order)
     k = [1,0]*sortrows([1:size(gk,2);gk].',2).';
     g = zin.Generators(:,k);
     n = zin.Dimension;
-    h = sum(cell2mat(cellfun(@abs,num2cell(g(:,1:2*n),2),"uniform",0)),2);
+    h = diag(sum(abs(g(:,1:2*n)),2));
     f = str2func(class(zin));
-    zout = f([h.*eye(n),g(:,2*n + 1:end)],zin.Center);
+    zout = f([h,g(:,2*n + 1:end)],zin.Center);
 end
