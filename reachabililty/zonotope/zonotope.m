@@ -74,7 +74,7 @@ classdef zonotope
             g = gin(:,any(gin,1));
         end
         function g = condenseAligned(obj,gin)
-            tol = 1E-09;
+            tol = 1E-06;
             k = nchoosek(1:size(gin,2),2).';
             f = @(a,b)a.'*b./(norm(a)*norm(b));
             a = num2cell(gin(:,k(1,:)),1);
