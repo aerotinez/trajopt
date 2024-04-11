@@ -12,7 +12,7 @@ classdef zonotope
                 center (:,1) double = zeros(size(generators,1),1);
             end 
             obj.Center = center;
-            obj.Generators = generators;
+            obj.Generators = obj.condense(generators);
             obj.validateDimensions();
             obj.Dimension = size(center,1);
             obj.Order = size(generators,2)/obj.Dimension;
@@ -69,6 +69,30 @@ classdef zonotope
             if size(A,2) ~= size(obj.Center,1)
                 error(msg);
             end
+        end
+        function g = removeZeroGenerators(~,gin)
+            g = gin(:,any(gin,1));
+        end
+        function g = condenseAligned(obj,gin)
+            tol = 1E-09;
+            k = nchoosek(1:size(gin,2),2).';
+            f = @(a,b)a.'*b./(norm(a)*norm(b));
+            a = num2cell(gin(:,k(1,:)),1);
+            b = num2cell(gin(:,k(2,:)),1);
+            ang = cellfun(f,a,b);
+            inds = abs(1 - ang) < tol;
+            if ~any(inds)
+                g = gin;
+                return;
+            end
+            ka = k(:,inds);
+            gk = gin(:,ka(1,1)) + gin(:,ka(2,1));
+            gin(:,ka(:,1)) = [];
+            g = obj.condenseAligned([gin,gk]);
         end 
+        function g = condense(obj,gin)
+            g = obj.removeZeroGenerators(gin);
+            g = obj.condenseAligned(g);
+        end
     end
 end
