@@ -27,22 +27,8 @@ function R = girard2005Alg(X0,A,b,t,m)
     R{1} = Q;
 
     for i = 1:numel(t) - 1
-        Q = reduceOrder(a*Q + fhc(br),m);
+        Q = box(a*Q + fhc(br),m);
         R{i + 1} = Q;
     end
     R = [R{:}];
-end
-
-function zout = reduceOrder(zin,order)
-    if zin.Order <= order
-        zout = zin;
-        return;
-    end
-    gk = vecnorm(zin.Generators,1,1) - vecnorm(zin.Generators,inf,1);
-    k = [1,0]*sortrows([1:size(gk,2);gk].',2).';
-    g = zin.Generators(:,k);
-    n = zin.Dimension;
-    h = diag(sum(abs(g(:,1:2*n)),2));
-    f = str2func(class(zin));
-    zout = f([h,g(:,2*n + 1:end)],zin.Center);
 end
