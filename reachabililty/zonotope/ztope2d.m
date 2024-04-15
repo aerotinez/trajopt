@@ -1,11 +1,11 @@
-classdef zonotope2d < zonotope
+classdef ztope2d < ztope
     methods (Access = public)
-        function obj = zonotope2d(genertors,center)
+        function obj = ztope2d(genertors,center)
             arguments
                 genertors (2,:) double;
                 center (2,1) double = zeros(2,1);
             end
-            obj@zonotope(genertors,center);
+            obj@ztope(genertors,center);
         end
         function plot(obj)
             axe = gca;

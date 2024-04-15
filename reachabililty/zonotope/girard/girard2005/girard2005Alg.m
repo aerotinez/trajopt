@@ -1,6 +1,6 @@
 function R = girard2005Alg(X0,A,b,t,m)
     arguments
-        X0 (1,1) zonotope;
+        X0 (1,1) ztope;
         A double {mustBeReal};
         b (1,1) double {mustBeReal,mustBePositive};
         t (1,:) double {mustBeReal};

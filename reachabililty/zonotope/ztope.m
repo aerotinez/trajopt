@@ -1,4 +1,4 @@
-classdef zonotope
+classdef ztope
     properties (GetAccess = public, SetAccess = private)
         Center;
         Generators;
@@ -6,7 +6,7 @@ classdef zonotope
         Order;
     end
     methods (Access = public)
-        function obj = zonotope(generators,center)
+        function obj = ztope(generators,center)
             arguments
                 generators double;
                 center (:,1) double = zeros(size(generators,1),1);
@@ -19,8 +19,8 @@ classdef zonotope
         end
         function zn = plus(za,zb)
             arguments
-                za zonotope;
-                zb zonotope;
+                za ztope;
+                zb ztope;
             end
             za.validatePlusDimensions(zb);
             c = za.Center + zb.Center;
@@ -31,7 +31,7 @@ classdef zonotope
         function zn = mtimes(A,z)
             arguments
                 A double;
-                z zonotope;
+                z ztope;
             end
             z.validateMtimesDimensions(A);
             c = A*z.Center;
@@ -45,7 +45,7 @@ classdef zonotope
         end
         function z = box(obj,order)
             arguments
-                obj zonotope;
+                obj ztope;
                 order (1,1) double {mustBeReal,mustBePositive} = 10;
             end
             if obj.Order <= order
@@ -86,7 +86,7 @@ classdef zonotope
             end 
         end
         function validateMtimesDimensions(obj,A)
-            msg = "A must have as many columns as the zonotope has dimenions";
+            msg = "A must have as many columns as the ztope has dimenions";
             if size(A,2) ~= size(obj.Center,1)
                 error(msg);
             end
