@@ -2,8 +2,6 @@ classdef ztope
     properties (GetAccess = public, SetAccess = private)
         Center;
         Generators;
-        Dimension;
-        Order;
     end
     methods (Access = public)
         function obj = ztope(generators,center)
@@ -13,65 +11,78 @@ classdef ztope
             end 
             obj.Center = center;
             obj.Generators = generators;
-            obj.validateDimensions();
-            obj.Dimension = size(center,1);
-            obj.Order = size(generators,2)/obj.Dimension;
+            validateDimensions(obj);
         end
         function zn = plus(za,zb)
             arguments
                 za ztope;
-                zb ztope;
+                zb ztope {validatePlusDimensions(za,zb)};
             end
-            za.validatePlusDimensions(zb);
-            c = za.Center + zb.Center;
-            g = [za.Generators,zb.Generators];
-            f = str2func(class(za));
-            zn = f(g,c);
+            zn = ztope([za.Generators,zb.Generators],za.Center + zb.Center);
         end
         function zn = mtimes(A,z)
             arguments
                 A double;
-                z ztope;
+                z ztope {validateMtimesDimensions(z,A)};
             end
-            z.validateMtimesDimensions(A);
-            c = A*z.Center;
-            g = A*z.Generators;
-            f = str2func(class(z));
-            zn = f(g,c);
+            zn = ztope(A*z.Generators,A*z.Center);
         end
-        function g = condense(obj,gin)
-            g = obj.removeZeroGenerators(gin);
-            g = obj.condenseAligned(g);
+        function n = dim(obj)
+            n  = size(obj.Center,1);
         end
-        function z = box(obj,order)
+        function p = order(obj)
+            p = size(obj.Generators,2)/dim(obj);
+        end
+        function zn = project(obj,dims)
             arguments
                 obj ztope;
-                order (1,1) double {mustBeReal,mustBePositive} = 10;
+                dims (1,:) double {mustBeInteger,mustBePositive};
             end
-            if obj.Order <= order
+            zn = ztope(obj.Generators(dims,:),obj.Center(dims));
+        end
+        function p = vertices(obj)
+            Z = filtercollinear(rmnullcols(obj.Generators));
+            combs = (dec2bin(0:2^size(Z,2) - 1) - '0').';
+            combs(combs == 0) = -1;
+            p = zeros(size(Z,1),size(combs,2));
+            for i = 1:size(combs,2)
+                p(:,i) = sum(Z.*combs(:,i).',2);
+            end
+            p = unique(p.','rows').';
+            p = unique(p(:,convhulln(p.')).','rows').' + obj.Center;
+        end
+        function plot(obj,dims)
+            arguments
+                obj ztope;
+                dims (1,:) double {mustBeInteger,mustBePositive} = 1:dim(obj);
+            end
+            if ~ismember(numel(dims),[2,3])
+                error("Only 2D and 3D plots are supported");
+            end
+            P = obj.project(dims).vertices();
+            H = P(:,convhull(P.'));
+            switch numel(dims)
+                case 2
+                    obj.plot2d(H);
+                case 3
+                    obj.plot3d(H);
+            end
+        end
+        function z = box(obj,ord)
+            arguments
+                obj ztope;
+                ord (1,1) double {mustBeReal,mustBePositive} = 10;
+            end
+            if order(obj) <= ord
                 z = obj;
                 return;
             end
             gk = vecnorm(obj.Generators,1,1) - vecnorm(obj.Generators,inf,1);
             k = [1,0]*sortrows([1:size(gk,2);gk].',2).';
             g = obj.Generators(:,k);
-            n = obj.Dimension;
+            n = dim(obj);
             h = diag(sum(abs(g(:,1:2*n)),2));
-            f = str2func(class(obj));
-            z = f([h,g(:,2*n + 1:end)],obj.Center);
-        end
-        function Z = generate(obj)
-            M = cellfun(@(g)[-g,g],num2cell(obj.Generators,1),"uniform",0);
-            if size(obj.Generators,2) <= obj.Dimension + 1
-                Z = minkowskiSum(obj.Center,M{:});
-                return;
-            end
-            Z = minkowskiSum(obj.Center,M{1:obj.Dimension});
-            Z = unique(Z(:,convhulln(Z.')).',"rows","stable").';
-            for i = obj.Dimension + 1:size(obj.Generators,2)
-                Z = minkowskiSum(Z,M{i});
-                Z = unique(Z(:,convhulln(Z.')).',"rows","stable").';
-            end
+            z = ztope([h,g(:,2*n + 1:end)],obj.Center);
         end 
     end
     methods (Access = protected)
@@ -81,7 +92,7 @@ classdef ztope
             end
         end
         function validatePlusDimensions(obj,z)
-            if obj.Dimension ~= z.Dimension
+            if dim(obj) ~= dim(z)
                 error("Zonotopes must have the same dimension to be summed");
             end 
         end
@@ -91,41 +102,21 @@ classdef ztope
                 error(msg);
             end
         end
-        function g = removeZeroGenerators(~,gin)
-            g = gin(:,any(gin,1));
+        function plot2d(~,H)
+            axe = gca; 
+            hold(axe,"on");
+            fill(H(1,:),H(2,:),[0,0.4470,0.7410]);
+            hold(axe,"off");
         end
-        function k_aligned = alignedPairs(~,g,tol)
-            arguments
-                ~;
-                g double;
-                tol (1,1) double {mustBePositive} = 1E-06;
-            end
-            k = nchoosek(1:size(g,2),2).';
-            a = num2cell(g(:,k(1,:)),1);
-            b = num2cell(g(:,k(2,:)),1);
-            ang = cellfun(@(a,b)a.'*b./(norm(a)*norm(b)),a,b);
-            inds = abs(1 - ang) < tol;
-            ka = k(:,inds);
-            [~,ia] = unique(ka(1,:));
-            k_aligned = ka(:,ia);
+        function plot3d(~,H)
+            axe = gca;
+            view(axe,3); 
+            [Tfb,Xfb] = freeBoundary(delaunayTriangulation(unique(H.',"rows")));
+            TR = triangulation(Tfb,Xfb);
+            hold(axe,"on");
+            trisurf(TR,"FaceColor",[0,0.4470,0.7410]);
+            lighting(axe,"flat");
+            hold(axe,"off");
         end
-        function [gn,ga] = unalignedGenerators(obj,g)
-            ka = obj.alignedPairs(g);
-            kn = ~ismember(1:size(g,2),unique(ka).');
-            gn = g(:,kn);
-            ga = g(:,~kn);
-        end  
-        function g = condenseAligned(obj,gin)
-            [gn,ga] = obj.unalignedGenerators(gin); 
-            if isempty(ga)
-                g = gn;
-                return
-            end
-            k = obj.alignedPairs(ga);
-            G = graph(k(1,:),k(2,:));
-            bins = conncomp(G);
-            gs = arrayfun(@(x)sum(ga(:,bins==x),2),unique(bins),"uniform",0);
-            g = [cell2mat(gs),gn];
-        end 
     end
 end
