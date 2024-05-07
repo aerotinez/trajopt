@@ -6,7 +6,7 @@ function P = verticesCanonical(G)
     m = size(G,1);
     P = zeros(1,n);
     La = double.empty(0,n);
-    for k = 1:floor(m/2) - 1
+    for k = 1:floor(m/2)
         Lb = double.empty(0,n);
         idx = size(La,1);
         if idx == 0
