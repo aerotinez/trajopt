@@ -18,14 +18,7 @@ tic;
 zh = ZonoHull(G);
 toc;
 
-fig = figure();
-axe = axes(fig);
-for k = 1:size(G,2)
-    zh.Layers(k).plot();
-end
-view(axe,3);
-axis(axe,"equal");
-box(axe,"on");
+zh.plot();
 
 function v = checkVertices(G)
     f = @(g)[0.*g,g];

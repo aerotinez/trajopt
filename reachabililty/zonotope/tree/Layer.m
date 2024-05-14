@@ -16,7 +16,12 @@ classdef Layer < handle
             axe = gca;
             v = obj.Vertices;
             hold(axe,"on");
-            scatter3(axe,v(1,:),v(2,:),v(3,:),"filled");
+            switch size(v,1)
+                case 2
+                    scatter(axe,v(1,:),v(2,:),"filled");
+                case 3
+                    scatter3(axe,v(1,:),v(2,:),v(3,:),"filled");
+            end
             hold(axe,"off");
         end
     end 

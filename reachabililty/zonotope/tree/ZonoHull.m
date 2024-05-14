@@ -44,14 +44,17 @@ classdef ZonoHull < handle
         function v = setVertices(~,layer)
             G = layer.Generators;
             p = reshape(layer.Vertices,size(G,1),1,[]) + G;
-            v = cell2mat(squeeze(num2cell(p,[1,2])).');
+            v = reshape(p, size(G,1), []);
         end 
         function propagateLayers(obj)
             G = obj.Layers(end).Generators;
             m = size(G,2);
             while m > 0
                 obj.addLayer();
-                obj.pruneDuplicates();
+                kd = obj.findDuplicates();
+                obj.prune(kd);
+                % kh = obj.findHull();
+                % obj.prune(kh);
                 G = obj.Layers(end).Generators;
                 m = size(G,2);
             end
@@ -66,8 +69,16 @@ classdef ZonoHull < handle
                 end
             end
         end
-        function pruneDuplicates(obj)
-            idx = obj.findDuplicates();
+        function idx = findHull(obj)
+            v = obj.Layers(end).Vertices.';
+            if size(unique(v,"rows"),1) < 3
+                idx = 1:size(v,1);
+                return;
+            end
+            k = convhull(v);
+            idx = unique(k(:));
+        end 
+        function prune(obj,idx)
             obj.Layers(end).Vertices = obj.Layers(end).Vertices(:,idx);
             obj.Layers(end).Generators = obj.Layers(end).Generators(:,:,idx);
         end
