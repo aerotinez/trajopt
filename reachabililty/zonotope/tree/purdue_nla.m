@@ -1,22 +1,28 @@
-clear; clc;
+close("all"); clear; clc;
 
-n = 2;
+n = 3;
 m = 4;
 
 c = zeros(n,1);
 
-G = [
-    -0.5698,0.9575,-0.3414,-1.1797;
-    -0.0020,0.7378,0.8886,1.3815
-    ];
+% G = [
+%     -0.5698,0.9575,-0.3414,-1.1797;
+%     -0.0020,0.7378,0.8886,1.3815;
+%     0,0,0,0
+%     ];
+
+rng(10);
+G = rand(n,m);
 
 v = minkowskiVertices(G);
 P = cellfun(@(g)pnplane(c,g),num2cell(G,1));
 hp = cell2mat(arrayfun(@(P)P.r0.'./norm(P.r0),P,"uniform",0));
 
 fig = myFigure();
-% plotGenerators(G./vecnorm(G,2,1))
-plotGenerators(hp)
+plotGenerators(G./vecnorm(G,2,1));
+f = @(g,c)plotPlane(pnplane(zeros(n,1),g),mcolor(c));
+cellfun(f,num2cell(G,1),cellstr('boyp'.').')
+
 
 function P = pnplane(c,g)
     arguments
@@ -24,11 +30,25 @@ function P = pnplane(c,g)
         g (:,1) double;
     end
     n = g./norm(g);
-    r = -ones(size(n,1) - 1,1);
-    d = dot(n,c);
-    z = (d - dot(n(1:end - 1),r))./n(end);
-    r0 = [r;z];
-    P = struct('n',n.','r0',r0.');
+    P = struct('n',n.','r0',c.');
+end
+
+function plotPlane(P,c)
+    a = linspace(-pi,pi,360);
+    x = cos(a);
+    y = sin(a);
+    r = [x;y];
+    d = dot(P.n,P.r0);
+    z = (d - P.n(1:end - 1)*r)./P.n(end);
+    v = [r;z];
+    v = v./vecnorm(v,2,1);
+    px = v(1,:);
+    py = v(2,:);
+    pz = v(3,:);
+    axe = gca;
+    hold(axe,"on");
+    fill3(axe,px,py,pz,'k',"FaceColor",c,"FaceAlpha",1,"LineWidth",2);
+    hold(axe,"off");
 end
 
 function fig = myFigure()
