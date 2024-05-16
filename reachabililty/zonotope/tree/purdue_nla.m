@@ -5,24 +5,28 @@ m = 4;
 
 c = zeros(n,1);
 
-% G = [
-%     -0.5698,0.9575,-0.3414,-1.1797;
-%     -0.0020,0.7378,0.8886,1.3815;
-%     0,0,0,0
-%     ];
-
-rng(10);
-G = rand(n,m);
+G = [0.1,0.2,3;
+    1,2,1;
+    -1,2,-1;
+    -0.5,-0.4,1
+    ].';
 
 v = minkowskiVertices(G);
 P = cellfun(@(g)pnplane(c,g),num2cell(G,1));
-hp = cell2mat(arrayfun(@(P)P.r0.'./norm(P.r0),P,"uniform",0));
+Pc = P(nchoosek(1:size(G,2),2));
+I = arrayfun(@intersection,Pc(:,1),Pc(:,2),"uniform",0);
+fl = @(f)[f(-2),f(2)]./vecnorm([f(-2),f(2)],2,1);
+l = cellfun(fl,I,"uniform",0);
+lplot = @(l)plot3(l(1,:),l(2,:),l(3,:),'k',"LineWidth",2);
 
 fig = myFigure();
 plotGenerators(G./vecnorm(G,2,1));
 f = @(g,c)plotPlane(pnplane(zeros(n,1),g),mcolor(c));
 cellfun(f,num2cell(G,1),cellstr('boyp'.').')
-
+hold on;
+cellfun(lplot,l);
+hold off;
+view(3);
 
 function P = pnplane(c,g)
     arguments
@@ -31,6 +35,34 @@ function P = pnplane(c,g)
     end
     n = g./norm(g);
     P = struct('n',n.','r0',c.');
+end
+
+function l = intersection(Pa,Pb)
+    d = cross(Pa.n,Pb.n);
+
+    fA = @(k)[
+        Pa.n(k);
+        Pb.n(k)
+        ];
+
+    b = [
+        dot(Pa.n,Pa.r0);
+        dot(Pb.n,Pb.r0);
+        ];
+
+    n = numel(Pa.n);
+    fk = @(k)ismember(1:n,k);
+    k = cell2mat(cellfun(fk,num2cell(nchoosek(1:n,n - 1),2),"uniform",0));
+
+    r0 = zeros(size(Pa.r0));
+    for i = 1:size(k,1)
+        A = fA(k(i,:));
+        if det(A) ~= 0
+            r0(k(i,:)) = A\b;
+            break;
+        end
+    end
+    l = @(t)r0(:) + t.*d(:);
 end
 
 function plotPlane(P,c)
