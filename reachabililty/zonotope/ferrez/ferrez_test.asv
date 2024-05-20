@@ -12,7 +12,6 @@ f = @(Pk)partitionSphere(P{1},mapToPlane(Pk,circle()));
 p = cell2mat(cellfun(f,P(2:end),"uniform",0));
 R = planeOrientation(P{1});
 p2 = R.'*stereographicProjection(P{1},p);
-pa = flattenSphereProjection(p2(1:2,:));
 
 fig = myFigure();
 f = @(P,c)plotPlane(P,mcolor(c));
@@ -172,13 +171,3 @@ function plotFrame(R,p)
 end
 
 function p = flattenSphereProjection(p0)
-    arguments
-        p0 (2,:) double;
-    end
-    P = [
-        1:size(p0,2);
-        vecnorm(p0,2,1)
-        ].';
-    P = sortrows(P,2);
-    p = p0(:,P(1:2,1));
-end
