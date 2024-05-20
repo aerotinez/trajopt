@@ -6,7 +6,7 @@ function R = frameFromNormal(n)
         n = normCols(n);
     end
     ez = n;
-    ex = normcols(cross(ez,ez + [1;0;0]));
-    ey = normcols(cross(ez,ex));
+    ex = normCols(cross(ez,ez + [1;0;0]));
+    ey = normCols(cross(ez,ex));
     R = [ex,ey,ez];
 end
