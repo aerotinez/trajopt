@@ -28,6 +28,18 @@ classdef Plane
             plotAxis(obj.n,zeros(3,1),color);
             hold(axe,'off');
         end
+        function l = intersect(obj,P)
+            arguments
+                obj;
+                P (1,1) Plane;
+            end
+            ha = obj.n.'*obj.p(:,1);
+            hb = P.n.'*P.p(:,1);
+            n0 = obj.n.'*P.n;
+            ca = (ha - hb*n0)/(1 - n0^2);
+            cb = (hb - ha*n0)/(1 - n0^2);
+            l = Line(ca*obj.n + cb*P.n,normCols(cross(obj.n,P.n)));
+        end
         function d = distanceFrom(obj,p)
             arguments
                 obj;

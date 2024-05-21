@@ -24,7 +24,7 @@ classdef Line
                 obj;
                 color (1,1) string = "#000000";
             end
-            p = normCols(obj.point([-1,1]));
+            p = normCols(obj.point(1.001.*[-1,1]));
             axe = gca;
             hold(axe,'on');
             P = plot3(axe,p(1,:),p(2,:),p(3,:), ...
