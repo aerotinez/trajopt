@@ -5,8 +5,12 @@ function R = frameFromNormal(n)
     if norm(n) ~= 1
         n = normCols(n);
     end
-    ez = n;
-    ex = normCols(cross(ez,ez + [1;0;0]));
-    ey = normCols(cross(ez,ex));
-    R = [ex,ey,ez];
+    ez = [0;0;1];
+    if isequal(n,ez)
+        R = eye(3);
+        return;
+    end
+    axe = normCols(cross(n,ez));
+    ang = acos(n.'*ez);
+    R = axang2rotm([axe;ang].'); 
 end

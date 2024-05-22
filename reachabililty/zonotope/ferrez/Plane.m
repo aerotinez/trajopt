@@ -1,5 +1,5 @@
 classdef Plane
-    properties (GetAccess = public, SetAccess = private)
+    properties (GetAccess = public, SetAccess = public)
         n;
         p;
     end
@@ -14,18 +14,20 @@ classdef Plane
             obj.n = n;
             obj.p = obj.boundary();
         end
-        function plot(obj,color)
+        function plot(obj,color,alpha)
             arguments
                 obj;
                 color (1,1) string = "#000000";
+                alpha (1,1) double = 1;
             end
             axe = gca;
             hold(axe,'on');
             fill3(axe,obj.p(1,:),obj.p(2,:),obj.p(3,:),'k', ...
                 "LineWidth",2, ...
-                "EdgeColor",color, ...
-                "FaceColor",'w');
-            plotAxis(obj.n,zeros(3,1),color);
+                "EdgeColor",'k', ...
+                "FaceAlpha",alpha, ...
+                "FaceColor",color);
+            % plotAxis(obj.n,zeros(3,1),color);
             hold(axe,'off');
         end
         function l = intersect(obj,P)
@@ -50,9 +52,8 @@ classdef Plane
     end
     methods (Access = private)
         function p = boundary(obj)
-            t = linspace(-pi,pi,1000);
-            pc = [cos(t);sin(t)];
-            p = normCols([pc;-obj.n(1:2).'*pc./obj.n(3)]);
+            t = linspace(-pi,pi,100);
+            p = frameFromNormal(obj.n).'*[cos(t);sin(t);0.*t];
         end
     end
 end
