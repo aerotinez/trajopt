@@ -19,6 +19,20 @@ classdef Line
             end
             p = obj.p0 + t.*obj.d;
         end
+        function p = intersect(la,lb)
+            arguments
+                la (1,1) Line;
+                lb (1,1) Line;
+            end
+            A = [-la.d,lb.d];
+            if rank(A) < 2
+                p = nan(3,1);
+                return;
+            end
+            b = la.p0 - lb.p0;
+            t = A\b;
+            p = la.point(t(1));
+        end
         function P = plot(obj,color)
             arguments
                 obj;
