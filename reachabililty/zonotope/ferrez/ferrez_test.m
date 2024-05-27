@@ -73,11 +73,11 @@ Gk = G(:,1:k);
 f = [
     -1;
     zeros(n,1)
-    ];
+    ].';
 
 A = [
-    -diag(c)*Gk.',diag(c)*ones(k,1);
-    zeros(1,n),1
+    ones(k,1),-diag(c)*Gk.';
+    1,zeros(1,n)
     ];
 
 b = [
@@ -85,13 +85,8 @@ b = [
     1
     ];
 
-lb = [
-    -inf(n,1);
-    0
-    ];
-
 options = optimoptions('linprog','Display','none');
-[x,~,exitflag,~] = linprog(f,A,b,[],[],lb,[],options);
+[x,~,flag,~] = linprog(f,A,b,[],[],[],[],options);
 
 hold on;
 scatter3(p0(1),p0(2),p0(3),'r',"filled");
