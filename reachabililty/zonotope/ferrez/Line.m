@@ -33,6 +33,14 @@ classdef Line
             t = A\b;
             p = la.point(t(1));
         end
+        function L = unique(L0)
+            arguments
+                L0 (1,:) Line;
+            end
+            d0 = cell2mat(arrayfun(@(l) l.d,L0,"uniform",0)).';
+            [~,k] = unique(d0,'rows');
+            L = L0(k);
+        end
         function P = plot(obj,color)
             arguments
                 obj;

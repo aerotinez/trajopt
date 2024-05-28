@@ -110,6 +110,7 @@ classdef ztope
         end
         function plot3d(~,H)
             axe = gca;
+            disp(size(H))
             view(axe,3); 
             [Tfb,Xfb] = freeBoundary(delaunayTriangulation(unique(H.',"rows")));
             TR = triangulation(Tfb,Xfb);
