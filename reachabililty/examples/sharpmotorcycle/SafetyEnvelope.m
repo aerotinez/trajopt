@@ -1,0 +1,2 @@
+classdef SafetyEnvelope
+end
