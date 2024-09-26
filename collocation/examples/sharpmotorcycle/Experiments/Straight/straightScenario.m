@@ -1,4 +1,4 @@
 function road = straightScenario()
 road = Road();
-road.addStraight(125);
+road.addStraight(500);
 end
