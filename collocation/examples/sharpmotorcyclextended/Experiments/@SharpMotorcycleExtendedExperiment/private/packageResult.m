@@ -1,9 +1,0 @@
-function res = packageResult(obj)
-    arguments
-        obj (1,1) SharpMotorcycleExtendedExperiment;
-    end
-    res = struct( ...
-        "Collocation", obj.getCollocationResult(), ...
-        "Trajectory", obj.getInterpolationResult() ...
-        );
-end

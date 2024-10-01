@@ -1,5 +1,5 @@
 close("all"); clear; clc;
-path = "C:\Users\marti\trajopt\examples\sharpmotorcycle\Experiments\Straight\";
+path = "C:\Users\marti\trajopt\collocation\examples\sharpmotorcycle\Experiments\Straight\";
 
 params = [
     bigSportsParameters();
