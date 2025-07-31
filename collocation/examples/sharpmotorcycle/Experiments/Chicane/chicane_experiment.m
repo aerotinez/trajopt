@@ -34,4 +34,4 @@ g = @LegendreGaussRadau;
 f = @(p)SharpMotorcycleExperiment(g,38,v,scen,state,input,p).run();
 results = arrayfun(f,params);
 
-save(path + "chicane_results.mat","results");
+% save(path + "chicane_results.mat","results");

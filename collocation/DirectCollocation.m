@@ -7,6 +7,8 @@ classdef DirectCollocation < handle
         FinalTime;
         Time;
         ns = 100;
+        StateRegularizationWeights;
+        ControlRegularizationWeights;
     end  
     methods (Access = public)
         function obj = DirectCollocation(prob,objfun,plant,t0,tf) 
@@ -22,7 +24,7 @@ classdef DirectCollocation < handle
             obj.Plant = plant; 
             obj.InitialTime = t0;
             obj.FinalTime = tf;
-            obj.setTime(); 
+            obj.setTime();
         end
         function varargout = solve(obj,solver)
             arguments
