@@ -14,12 +14,12 @@ dirs = [
 arrayfun(@addpath,dirs);
 
 %% Constants
-NUM_COLLOCATION_POINTS = 34;
-SPEED = 130;
+NUM_COLLOCATION_POINTS = 25;
+SPEED = 50;
 LANE_WIDTH = 3.5;
 
 %% Scenario
-scen = straightScenario;
+scen = arcScenario;
 
 %% Problem
 prog = directcollocation.LegendreGaussRadau(NUM_COLLOCATION_POINTS,1);
@@ -46,6 +46,7 @@ My0 = abs(u0(1));
 names = [
     "Relative heading";
     "Offset";
+    "Forward Speed"
     "Camber";
     "Steer";
     "Yaw rate (body-fixed)";
@@ -57,6 +58,7 @@ names = [
 quantities = [
     "angle";
     "distance";
+    "speed";
     "angle";
     "angle";
     "speed";
@@ -68,6 +70,7 @@ quantities = [
 units = [
     "rad";
     "m";
+    "m/s";
     "rad";
     "rad";
     "rad/s";
@@ -79,6 +82,7 @@ units = [
 x0 = [
     0;
     d0;
+    SPEED/3.6;
     0;
     0;
     0;
@@ -88,14 +92,17 @@ x0 = [
     ];
 
 xf = -x0;
+xf(3) = SPEED/3.6;
 
 lb = [
     -inf;
     2*d0;
+    1;
     -inf(6,1)
     ];
 
 ub = -lb;
+ub(3) = 150/3.6;
 
 states = directcollocation.vartable(names, ...
     'Quantity',quantities, ...
@@ -110,13 +117,13 @@ prog.setStates(states);
 
 %% Inputs
 
-controls = directcollocation.vartable("Steer torque", ...
-    'Quantity',"torque", ...
-    'Units',"Nm", ...
-    'InitialValue',0, ...
-    'FinalValue',0, ...
-    'LowerBound',-inf, ...
-    'UpperBound',inf ...
+controls = directcollocation.vartable(["Steer torque","Throttle"], ...
+    'Quantity',["torque","Force"], ...
+    'Units',["Nm","N"], ...
+    'InitialValue',[0,0], ...
+    'FinalValue',[0,0], ...
+    'LowerBound',[-50,-10], ...
+    'UpperBound',[50,10] ...
     );
 
 prog.setControls(controls);
@@ -131,20 +138,21 @@ prog.setParameters(table(k(2:end)'));
 M = prydeMotorcycleLateralSSMassMatrix(p);
 H = @prydeMotorcycleLateralSSForcingMatrix;
 G = prydeMotorcycleLateralSSInputMatrix(p);
-fp = @(x)p;
+fp = @(x)[p(1:14);x(3,:);p(16:end)];
 
 A = @(p)M\H(p);
 B = M\G;
 
 rr = params.rr;
 fRoadRel = @roadRelativeKinematicsForcingVector;
-frr = @(x,p)fRoadRel([0*x(1,:);x(1:2,:)],[params.v;0.*x(1:2,:);x(3:end,:)],[p;rr]);
+frr = @(x,p)fRoadRel([0*x(1,:);x(1:2,:)],[x(3,:);0.*x(1:2,:);x(4:end,:)],[p;rr]);
 fs = @(x,p)[1,0,0]*frr(x,p);
 fdr = @(x,p)[zeros(2,1),eye(2)]*frr(x,p);
 
 f = @(x,u,p)(1/fs(x,p))*[
     fdr(x,p);
-    A(fp(x))*x(3:end,:) + B*u(1,:)
+    u(2,:);
+    A(fp(x))*x(4:end,:) + B*u(1,:)
     ];
 
 prog.setPlant(f);
@@ -160,9 +168,9 @@ prog.solve();
 
 xp = prog.Solution.value(prog.States)';
 
-tl = tiledlayout(4,2);
+tl = tiledlayout(3,3);
 
-for k = 1:8
+for k = 1:9
     axe = nexttile(tl,k);
     hold(axe,'on');
     plot(axe,t,x(:,k));
