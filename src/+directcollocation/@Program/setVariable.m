@@ -13,13 +13,13 @@ function setVariable(obj,vars,vars_tab)
         var = vars(var_idx,:);
 
         if ~isnan(x0) && ~isnan(xf)
-            x = linspace(x0,xf,obj.NumNodes);
+            x = linspace(x0,xf,size(vars,2));
         elseif ~isnan(x0) && isnan(xf)
-            x = x0*ones(1,obj.NumNodes);
+            x = x0*ones(1,size(vars,2));
         elseif isnan(x0) && ~isnan(xf)
-            x = xf*ones(1,obj.NumNodes);
+            x = xf*ones(1,size(vars,2));
         else
-            x = zeros(1,obj.NumNodes);
+            x = zeros(1,size(vars,2));
         end
 
         obj.Problem.set_initial(var,x);

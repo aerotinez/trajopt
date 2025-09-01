@@ -2,7 +2,7 @@ close("all"); clear; clc;
 
 %% Problem
 N = 13;
-prog = directcollocation.LegendreGauss(N);
+prog = directcollocation.LegendreGaussRadau(N,1);
 prog.setInitialTime(0);
 prog.setFinalTime();
 
@@ -12,8 +12,8 @@ quantities = ["distance","speed"]';
 units = ["m","m/s"]';
 x0 = [0,0]';
 xf = [1,0]';
-lb = [0,-inf]';
-ub = [1,1]';
+lb = [0,-10]';
+ub = [1,10]';
 
 states = directcollocation.vartable(names, ...
     'Quantity',quantities, ...
@@ -30,10 +30,10 @@ prog.setStates(states);
 names = "Force";
 quantities = "force";
 units = "N";
-x0 = 0;
-xf = 0;
-lb = -20;
-ub = 20;
+x0 = nan;
+xf = nan;
+lb = -100;
+ub = 100;
 
 controls = directcollocation.vartable(names, ...
     'Quantity',quantities, ...
@@ -47,7 +47,7 @@ controls = directcollocation.vartable(names, ...
 prog.setControls(controls);
 
 %% Parameters
-Mass = 500*ones(N,1);
+Mass = ones(N - 1,1);
 prog.setParameters(table(Mass));
 
 %% Plant

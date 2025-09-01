@@ -14,7 +14,7 @@ dirs = [
 arrayfun(@addpath,dirs);
 
 %% Constants
-NUM_COLLOCATION_POINTS = 34;
+NUM_COLLOCATION_POINTS = 32;
 SPEED = 130;
 LANE_WIDTH = 3.5;
 
@@ -22,7 +22,8 @@ LANE_WIDTH = 3.5;
 scen = straightScenario;
 
 %% Problem
-prog = directcollocation.LegendreGaussRadau(NUM_COLLOCATION_POINTS,1);
+N = 13;
+prog = directcollocation.LegendreGauss(N);
 prog.setInitialTime(0);
 prog.setFinalTime(scen.Parameter(end));
 
@@ -125,7 +126,7 @@ prog.setControls(controls);
 tau = ([-1,sort(roots(legpol(prog.NumNodes - 2))).',1] + 1)/2;
 k = interp1(scen.Parameter/scen.Parameter(end),scen.Curvature,tau);
 
-prog.setParameters(table(k(2:end)'));
+prog.setParameters(table(k(2:end-1)'));
 
 %% Plant
 M = prydeMotorcycleLateralSSMassMatrix(p);
@@ -166,6 +167,7 @@ for k = 1:8
     axe = nexttile(tl,k);
     hold(axe,'on');
     plot(axe,t,x(:,k));
+    scatter(axe,)
     hold(axe,'off');
     axis(axe,'tight');
     box(axe,'on');

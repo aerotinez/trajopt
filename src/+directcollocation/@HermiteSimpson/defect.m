@@ -4,7 +4,6 @@ function defect(obj)
     end
 
     Nn = obj.NumNodes;         % must be odd
-    Ni = obj.NumIntervals;     % even
     hT = (obj.FinalTime - obj.InitialTime);
 
     for i = 1:2:(Nn-2)

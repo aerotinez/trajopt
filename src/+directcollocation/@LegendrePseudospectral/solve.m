@@ -5,12 +5,11 @@ function solve(obj)
 
     obj.Problem.solver('ipopt');
 
-    setMesh(obj);                   % sets Mesh (nodes)
-    setQuadratureWeights(obj);      % sets QuadratureWeights for the scheme
-    obj.NumIntervals = numel(obj.Mesh) - 1;
-
-    setBarycentricWeights(obj);     % directcollocation.baryfit over Mesh
-    setDifferentiationMatrix(obj);  % barycentric D over Mesh
+    setCollocationIndices(obj);
+    setNodes(obj);
+    setMesh(obj);
+    setQuadratureWeights(obj);
+    setDifferentiationMatrix(obj);
 
     defect(obj);
     cost(obj);

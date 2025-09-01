@@ -18,7 +18,7 @@ function setStates(obj,states)
             obj.IsInitialStateFree(state_idx) = false;
         end
         if ~isnan(xf)
-            obj.Problem.subject_to(obj.States(state_idx,obj.NumNodes) == xf);
+            obj.Problem.subject_to(obj.States(state_idx,end) == xf);
             obj.IsFinalStateFree(state_idx) = false;
         end
     end

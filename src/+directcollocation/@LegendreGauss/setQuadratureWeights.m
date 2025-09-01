@@ -3,23 +3,19 @@ function setQuadratureWeights(obj)
         obj (1,1) directcollocation.LegendreGauss
     end
 
-    n = obj.NumNodes;
+    % NumNodes = N + 2 (endpoints plus N interior Gauss points)
+    N = obj.NumNodes - 2;
+    assert(N >= 1, 'LegendreGauss requires at least 1 collocation point.');
 
-    if n == 1
-        obj.QuadratureWeights = 1.0;           % sum=1 on [0,1]
-        return
-    end
+    % Golub–Welsch: Gauss–Legendre weights for N interior nodes
+    k = 1:(N-1);
+    b = k ./ sqrt(4*k.^2 - 1);           % recurrence off-diagonals
+    J = diag(b,1) + diag(b,-1);          % symmetric tridiagonal (N×N)
+    [V,D] = eig(J);
+    [~, idx] = sort(diag(D));            % sort nodes ascending (match setNodes)
+    V = V(:, idx);
 
-    % map Mesh back to [-1,1] for the closed-form weight formula
-    x = 2*obj.Mesh(:) - 1;                     % n×1
+    w = 2 * (V(1,:).^2);                 % 1×N Gauss weights
 
-    % w_i (on [-1,1]): 2 / ((1 - x_i^2) * [P'_n(x_i)]^2)
-    % use identity: (1 - x^2) P'_n = n * (x P_n - P_{n-1})
-    Pn   = directcollocation.legeval(n,   x);
-    Pnm1 = directcollocation.legeval(n-1, x);
-    denom  = n^2 * (x .* Pn - Pnm1).^2;
-    w_m11  = 2 * (1 - x.^2) ./ denom;         % sum = 2 on [-1,1]
-    w01    = 0.5 * w_m11;                     % sum = 1 on [0,1]
-
-    obj.QuadratureWeights = w01(:).';
+    obj.QuadratureWeights = w;           % row vector, aligns with XLG columns
 end

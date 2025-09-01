@@ -1,18 +1,25 @@
-classdef (Abstract) LegendrePseudospectral < directcollocation.Program
+classdef LegendrePseudospectral < directcollocation.Program
     properties (GetAccess = public, SetAccess = protected)
+        CollocationIndices;
+        Nodes;
         QuadratureWeights;
-        BarycentricWeights;
-        DifferentiationMatrix;   
+        DifferentiationMatrix;
+    end
+    methods (Access = public)
+        setStates(obj,states);
+    end
+    methods (Access = protected)
+        cost(obj);
     end
     methods (Access = public, Abstract)
         [t,x,u,p] = interpolate(obj,ns);
     end
     methods (Access = protected, Abstract)
+        setCollocationIndices(obj);
+        setNodes(obj);
         setMesh(obj);
         setQuadratureWeights(obj);
-        setBarycentricWeights(obj);
         setDifferentiationMatrix(obj);
-        cost(obj);
         defect(obj);
     end
 end
