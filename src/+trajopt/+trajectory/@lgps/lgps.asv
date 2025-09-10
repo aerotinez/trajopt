@@ -1,0 +1,24 @@
+classdef lgps < trajopt.trajectory.Trajectory
+    methods (Access = public)
+        function obj = lgps(prog,plant,state_table,control_table)
+            arguments
+                prog (1,1) trajopt.collocation.LegendrePseudospectral;
+                plant (1,1) function_handle;
+                state_table table;
+                control_table table;
+            end
+            obj@trajopt.trajectory.Trajectory(prog,plant,state_table,control_table);
+            if size(obj.States,1) - size(obj.Controls,1) == 2
+                obj.Controls = [
+                    nan(1,size(obj.Controls,2));
+                    obj.Controls;
+                    
+                    ];
+            elseif size(obj.States,1) - size(obj.Controls,1) == 0
+
+            else
+
+            end
+        end
+    end
+end

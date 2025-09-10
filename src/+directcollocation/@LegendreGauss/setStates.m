@@ -1,7 +1,0 @@
-function setStates(obj,states)
-    arguments
-        obj (1,1) directcollocation.LegendreGauss;
-        states table;
-    end
-    setStates@directcollocation.LegendrePseudospectral(obj,states);
-end

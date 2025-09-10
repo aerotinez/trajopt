@@ -1,6 +1,0 @@
-function cost(obj)
-    arguments
-        obj (1,1) directcollocation.LegendreGauss;
-    end
-    cost@directcollocation.LegendrePseudospectral(obj);
-end
