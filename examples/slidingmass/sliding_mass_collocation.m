@@ -2,7 +2,7 @@ close("all"); clear; clc;
 
 %% Problem
 N = 23;
-prog = trajopt.collocation.lgr(N,-1);
+prog = trajopt.collocation.lg(N);
 prog.setInitialTime(0);
 prog.setFinalTime();
 

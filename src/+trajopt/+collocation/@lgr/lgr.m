@@ -10,7 +10,16 @@ classdef lgr < trajopt.collocation.LegendrePseudospectral
             end
             obj@trajopt.collocation.LegendrePseudospectral(num_nodes);
             obj.IncludedEndPoint = included_end_point;
+            setCollocationIndices(obj);
+            setNodes(obj);
+            setMesh(obj);
+            setQuadratureWeights(obj);
+            setDifferentiationMatrix(obj);
         end
+    end
+    methods (Access = public)
+        setControls(obj,controls);
+        setParameters(obj,params);
     end
     methods (Access = protected)
         setCollocationIndices(obj);

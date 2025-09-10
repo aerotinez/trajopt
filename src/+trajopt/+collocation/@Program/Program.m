@@ -46,7 +46,6 @@ classdef (Abstract) Program < handle
     end
     methods (Access = protected)
         setVariable(obj,vars,vars_tab);
-        J = smoothCost(obj,a,b,c);
         setTime(obj);
     end
 end

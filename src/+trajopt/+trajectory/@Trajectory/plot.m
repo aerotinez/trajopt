@@ -37,7 +37,7 @@ function fig = plot(obj,num_rows,num_cols)
         axis(axe,'tight');
         title(axe,names(k),'FontSize',12);
         ylabel(axe,quantities(k) + " (" + units(k) + ")",'FontSize',12);
-        [row,~] = ind2sub([num_rows,num_cols],k);
+        [~,row] = ind2sub([num_cols,num_rows],k);
         if row == num_rows
             xlabel(axe,"time (s)",'FontSize',12);
         end

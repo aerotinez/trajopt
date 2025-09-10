@@ -9,8 +9,8 @@ function cost(obj)
 
     X = obj.States;
     XLG = obj.States(:,obj.CollocationIndices);
-    U = obj.Controls(:,obj.CollocationIndices);
-    P = obj.Parameters(:,obj.CollocationIndices);
+    U = obj.Controls;
+    P = obj.Parameters;
 
     L = ((tf - t0)/2)*w*obj.LagrangeCost(XLG,U,P)';
 

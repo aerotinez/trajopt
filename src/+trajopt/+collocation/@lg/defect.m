@@ -9,8 +9,8 @@ function defect(obj)
 
     X = obj.States;
     XLG = obj.States(:,obj.CollocationIndices);
-    U = obj.Controls(:,obj.CollocationIndices);
-    P = obj.Parameters(:,obj.CollocationIndices);
+    U = obj.Controls;
+    P = obj.Parameters;
 
     D = obj.DifferentiationMatrix;
     F = obj.Plant(XLG,U,P);

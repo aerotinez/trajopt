@@ -5,6 +5,11 @@ classdef LegendrePseudospectral < trajopt.collocation.Program
         QuadratureWeights;
         DifferentiationMatrix;
     end
+    methods (Access = public)
+        function obj = LegendrePseudospectral(varargin)
+            obj@trajopt.collocation.Program(varargin{1});
+        end
+    end
     methods (Access = protected)
         cost(obj);
         setMesh(obj);
