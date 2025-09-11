@@ -1,8 +1,8 @@
 function road = chicaneScenario()
 ang = deg2rad(90);
-straight_length = 25;
-clothoid_length = 100;
-arc_length = 150;
+straight_length = 200;
+clothoid_length = 200;
+arc_length = 200;
 radius = arc_length/ang;
 road = Road();
 road.addStraight(straight_length);

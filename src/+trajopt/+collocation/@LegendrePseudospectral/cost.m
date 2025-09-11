@@ -16,7 +16,7 @@ function cost(obj)
 
     M = obj.MayerCost(X(:,1),t0,X(:,end),tf);
 
-    J = L + M;
+    J = L + M + 1E-03*smoothCost(obj);
 
     obj.Problem.minimize(J);
 end

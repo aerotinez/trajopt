@@ -1,8 +1,4 @@
 classdef hs < trajopt.collocation.Program
-    properties (GetAccess = public, SetAccess = private)
-        MidStates;
-        MidControls;
-    end
     methods (Access = public)
         function obj = hs(num_nodes)
             arguments

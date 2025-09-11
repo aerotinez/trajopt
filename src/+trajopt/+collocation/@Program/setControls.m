@@ -11,10 +11,10 @@ function setControls(obj,controls)
         u0 = controls(control_idx,:).InitialValue;
         uf = controls(control_idx,:).FinalValue;
         if ~isnan(u0)
-            obj.Problem.subject_to(obj.States(control_idx,1) == u0);
+            obj.Problem.subject_to(obj.Controls(control_idx,1) == u0);
         end
         if ~isnan(uf)
-            obj.Problem.subject_to(obj.States(control_idx,end) == uf);
+            obj.Problem.subject_to(obj.Controls(control_idx,end) == uf);
         end
     end
 end

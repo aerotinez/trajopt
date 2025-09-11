@@ -13,6 +13,7 @@ classdef LegendrePseudospectral < trajopt.collocation.Program
     methods (Access = protected)
         cost(obj);
         setMesh(obj);
+        J = smoothCost(obj);
     end
     methods (Access = protected, Abstract)
         setCollocationIndices(obj);

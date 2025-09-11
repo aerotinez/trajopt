@@ -2,12 +2,12 @@ close("all"); clear; clc;
 cd(fileparts(mfilename('fullpath')));
 
 %% Constants
-NUM_COLLOCATION_POINTS = 62;
-SPEED = 130;
+NUM_COLLOCATION_POINTS = 38;
+SPEED = 50;
 LANE_WIDTH = 3.5;
 
 %% Scenario
-scen = straightScenario;
+scen = arcScenario;
 
 %% Problem
 prog = trajopt.collocation.lgr(NUM_COLLOCATION_POINTS,1);
@@ -18,7 +18,7 @@ prog.setFinalTime(scen.Parameter(end));
 bike = bigSportsParameters;
 params = bikeSimToPrydeParameters(bike,SPEED/3.6);
 p = cell2mat(struct2cell(params));
-d0 = -LANE_WIDTH/2;
+d0 = -(LANE_WIDTH/2 + 1.5);
 
 %% States
 
@@ -70,11 +70,11 @@ x0 = [
     0
     ];
 
-xf = -x0;
+xf = x0;
 
 lb = [
     -inf;
-    2*d0;
+    -LANE_WIDTH;
     -inf(7,1)
     ];
 
@@ -94,8 +94,8 @@ prog.setStates(states);
 %% Inputs
 
 controls = trajopt.vartable("Steer torque rate", ...
-    'Quantity',"torque", ...
-    'Units',"Nm", ...
+    'Quantity',"torque rate", ...
+    'Units',"Nm/s", ...
     'InitialValue',0, ...
     'FinalValue',nan, ...
     'LowerBound',-inf, ...
@@ -134,7 +134,7 @@ f = @(x,u,p)(1/fs(x,p))*[
 prog.setPlant(f);
 
 %% Objective
-prog.setObjective(@(x,u,p)(1/2)*u(:)'*u(:),@(x0,t0,xf,tf)0);
+prog.setObjective(@(x,u,p)(1/fs(x,p))^2,@(x0,t0,xf,tf)0);
 
 %% Solve
 prog.solve();

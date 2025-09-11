@@ -12,10 +12,10 @@ function JoinSegment(obj,segment)
     t = obj.Data(:,end);
     segment.transform(rigidtform3d(R,t));
     s = segment.Parameter + obj.Parameter(end);
-    obj.Parameter = [obj.Parameter,s];
-    obj.Data = [obj.Data,segment.Data];
-    obj.Curvature = [obj.Curvature,segment.Curvature];
+    obj.Parameter = [obj.Parameter(:,1:end - 1),s];
+    obj.Data = [obj.Data(:,1:end - 1),segment.Data];
+    obj.Curvature = [obj.Curvature(:,1:end - 1),segment.Curvature];
     obj.Length = obj.Length + segment.Parameter(end);
     ang = wrapTo180(segment.Heading + obj.Heading(end));
-    obj.Heading = [obj.Heading,ang];
+    obj.Heading = [obj.Heading(:,1:end - 1),ang];
 end 
